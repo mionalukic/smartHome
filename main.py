@@ -1,8 +1,7 @@
-
 import threading
-from settings import load_settings
-from components.dht import run_dht
 import time
+from settings import load_settings
+from components.ds1 import run_ds1
 
 try:
     import RPi.GPIO as GPIO
@@ -12,17 +11,18 @@ except:
 
 
 if __name__ == "__main__":
-    print('Starting app')
+    print("Starting PI1 app")
+
     settings = load_settings()
     threads = []
     stop_event = threading.Event()
+
     try:
-        dht1_settings = settings['DHT1']
-        run_dht(dht1_settings, threads, stop_event)
+        run_ds1(settings["DS1"], threads, stop_event)
+
         while True:
             time.sleep(1)
 
     except KeyboardInterrupt:
-        print('Stopping app')
-        for t in threads:
-            stop_event.set()
+        print("Stopping app")
+        stop_event.set()
