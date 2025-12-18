@@ -1,1 +1,1 @@
-# smatHome
+# smartHome
