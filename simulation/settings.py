@@ -8,6 +8,3 @@ def load_settings(filePath='settings.json'):
             data[name] = obj
             print(name, obj)
     return data
-
-if __name__ == "__main__":
-    load_settings()
