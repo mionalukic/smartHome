@@ -11,6 +11,7 @@ def run_ds1_button(pin, stop_event):
 
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    #pogledati kako spojiti sve na rasperdiju jedan u ground jedan u gpio17
 
     GPIO.add_event_detect(
         pin,
