@@ -1,10 +1,11 @@
 from simulators.door_buzzer import run_db_simulator
 import threading
 import time
+import random
 
 def run_db(settings, threads, stop_event, print_fn=print):
     if settings['simulated']:
-        db_thread = threading.Thread(target=run_db_simulator, args=(1, stop_event, print_fn))
+        db_thread = threading.Thread(target=run_db_simulator, args=(stop_event, print_fn))
         db_thread.start()
         threads.append(db_thread)
     else:
