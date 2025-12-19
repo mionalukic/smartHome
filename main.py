@@ -3,6 +3,7 @@ import threading
 from settings import load_settings
 from components.door_buzzer import run_db
 from components.door_motion_sensor import run_dpir
+from components.door_membrane_switch import run_dms
 
 import time
 
@@ -18,7 +19,7 @@ _console_lock = threading.Lock()
 def safe_print(*args, **kwargs):
     with _console_lock:
         print(*args, **kwargs, flush=True)
-        
+
 def main():
     print('Starting app')
     settings = load_settings()
@@ -32,6 +33,9 @@ def main():
             elif name == 'DPIR1':
                 print(name, cfg)
                 run_dpir(cfg, threads, stop_event)
+            elif name == 'DMS':
+                print(name, cfg)
+                run_dms(cfg, threads, stop_event)
         while not stop_event.wait(1.0):
             pass
 

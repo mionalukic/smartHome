@@ -6,6 +6,7 @@ class DB(object):
         self.pin = pin
 
     def buzz(self, pitch, duration):
+        GPIO.setup(self.pin)
         period = 1.0 / pitch
         delay = period / 2
         cycles = int(duration * pitch)
