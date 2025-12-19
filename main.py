@@ -13,7 +13,12 @@ try:
 except:
     GPIO_AVAILABLE = False
 
+_console_lock = threading.Lock()
 
+def safe_print(*args, **kwargs):
+    with _console_lock:
+        print(*args, **kwargs, flush=True)
+        
 def main():
     print('Starting app')
     settings = load_settings()
