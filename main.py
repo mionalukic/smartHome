@@ -2,7 +2,7 @@
 import threading
 from settings import load_settings
 from components.door_buzzer import run_db
-from components.door_motion_sensor import run_dms
+from components.door_motion_sensor import run_dpir
 
 import time
 
@@ -26,7 +26,7 @@ def main():
                 run_db(cfg, threads, stop_event)
             elif name == 'DPIR1':
                 print(name, cfg)
-                run_dms(cfg, threads, stop_event)
+                run_dpir(cfg, threads, stop_event)
         while not stop_event.wait(1.0):
             pass
 
