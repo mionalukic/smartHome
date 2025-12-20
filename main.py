@@ -29,8 +29,30 @@ def safe_print(message, *, component="SYSTEM", end="\n"):
     with _console_lock:
         print(f"{color}[{component}] {message}{RESET}", end=end, flush=True)
 
+def effective_cfg(name, cfg):
+    sim = cfg.get("simulated", True)
+    if not GPIO_AVAILABLE and not sim:
+        safe_print(f"GPIO not available; forcing simulation for {name}", component="SYSTEM")
+        cfg = dict(cfg)
+        cfg["simulated"] = True
+    return cfg
+
+def format_help():
+    return (
+        "Commands:\n"
+        "  help                       - show help\n"
+        "  status                     - list running actuators\n"
+        "  all                        - turn all actuators on\n"
+        "  buzz on                    - turn buzzer on\n"
+        "  buzz off                   - turn buzzer off\n"
+        "  quit | exit | q            - stop and exit\n"
+    )
+
 def command_loop(stop_event, actuator_registry, pi1_settings, threads):
     safe_print("Console ready. Type 'help' for commands.", component="SYSTEM")
+
+    db_settings = pi1_settings.get("DB", {})
+
     while not stop_event.is_set():
         try:
             cmd = input("> ").strip()
@@ -44,7 +66,6 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads):
 
         parts = cmd.split()
         op = parts[0].lower()
-        db_settings = pi1_settings["DB"]
 
         if op in ("quit", "exit", "q"):
             stop_event.set()
@@ -52,41 +73,43 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads):
             break
 
         elif op == "help":
-            safe_print(
-                "Commands:\n"
-                "  help                      - show this help\n"
-                "  status                    - list running components\n"
-                "  all                       - turn everything on\n"
-                "  buzz on                   - turn buzzer ON \n"
-                "  buzz off                  - turn buzzer OFF\n"
-                "  quit                      - stop and exit\n",
-                component="SYSTEM"
-            )
+            safe_print(format_help(), component="SYSTEM")
 
         elif op == "status":
-            names = ", ".join(sorted(actuator_registry))
-            safe_print(f"Components: {names}", component="SYSTEM")
+            names = sorted(actuator_registry)
+            label = ", ".join(names) if names else "(none)"
+            safe_print(f"Components: {label}", component="SYSTEM")
 
         elif op == "all":
             if "DB" not in actuator_registry:
-                run_db(True, db_settings, threads, stop_event, print_fn=lambda m: safe_print(m, component="DB"))
-                actuator_registry.append("DB")
-                safe_print(actuator_registry)
+                run_db(
+                    True, db_settings, threads, stop_event,
+                    print_fn=lambda m: safe_print(m, component="DB")
+                )
+                actuator_registry.add("DB")
+
         elif op == "buzz":
             sub = parts[1].lower() if len(parts) > 1 else ""
+
             if sub == "on":
                 if "DB" in actuator_registry:
                     safe_print("DB is already turned on", component="SYSTEM")
                 else:
-                # freq = float(parts[2]) if len(parts) > 2 else 440.0
-                # dur = float(parts[3]) if len(parts) > 3 else 0.0  # 0.0 means continuous
-                    run_db(True, db_settings, threads, stop_event, print_fn=lambda m: safe_print(m, component="DB"))
-                    actuator_registry.append("DB")
+                    # freq = float(parts[2]) if len(parts) > 2 else 440.0
+                    # dur = float(parts[3]) if len(parts) > 3 else 0.0
+                    run_db(
+                        True, db_settings, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DB")
+                    )
+                    actuator_registry.add("DB")
 
             elif sub == "off":
                 if "DB" in actuator_registry:
-                    run_db(False, db_settings, threads, stop_event, print_fn=lambda m: safe_print(m, component="DB"))
-                    actuator_registry.remove("DB")
+                    run_db(
+                        False, db_settings, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DB")
+                    )
+                    actuator_registry.discard("DB")
                 else:
                     safe_print("DB is already turned off", component="SYSTEM")
 
@@ -96,35 +119,30 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads):
         else:
             safe_print(f"Unknown command: {cmd}", component="SYSTEM")
 
-def effective_cfg(name, cfg):
-        sim = cfg.get("simulated", True)
-        if not GPIO_AVAILABLE and not sim:
-            safe_print(f"GPIO not available; forcing simulation for {name}", component="SYSTEM")
-            cfg = dict(cfg)
-            cfg["simulated"] = True
-        return cfg
-
 def main(args):
     safe_print("Starting app", component="SYSTEM")
 
-    settings = load_settings() 
-    pi1_settings = settings["PI1"]
+    settings = load_settings()
+    pi1_settings = settings.get("PI1", {})
     threads = []
     stop_event = threading.Event()
 
-    actuator_registry = []
+    actuator_registry = set()
 
     try:
         if "--sensors" in args:
             for name, cfg in pi1_settings.items():
                 cfg = effective_cfg(name, cfg)
+
                 if name == "DPIR1":
                     safe_print(f"{name} {cfg}", component=name)
-                    run_dpir(cfg, threads, stop_event, print_fn=lambda m: safe_print(m, component="DPIR1"))
+                    run_dpir(cfg, threads, stop_event,
+                             print_fn=lambda m: safe_print(m, component="DPIR1"))
 
                 elif name == "DMS":
                     safe_print(f"{name} {cfg}", component=name)
-                    run_dms(cfg, threads, stop_event, print_fn=lambda m: safe_print(m, component="DMS"))
+                    run_dms(cfg, threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="DMS"))
 
         command_loop(stop_event, actuator_registry, pi1_settings, threads)
 
