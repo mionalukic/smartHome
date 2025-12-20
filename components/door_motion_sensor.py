@@ -4,7 +4,7 @@ import time
 
 def run_dpir(settings, threads, stop_event, print_fn=print):
     if settings['simulated']:
-        dpir_thread = threading.Thread(target=run_dpir_simulator, args=(2, stop_event, print_fn))
+        dpir_thread = threading.Thread(target=run_dpir_simulator, args=(stop_event, print_fn))
         dpir_thread.start()
         threads.append(dpir_thread)
     else:
