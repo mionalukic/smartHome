@@ -15,8 +15,7 @@ class DMS(object):
         self.print_fn = print_fn
         GPIO.add_event_detect(self.button_pin, GPIO.BOTH,
                             callback=self.event_callback,
-                            bouncetime=300)
-        
+                            bouncetime=300)     
 
     def event_callback(self, pin):
         value = GPIO.input(pin)

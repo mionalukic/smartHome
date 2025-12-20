@@ -8,9 +8,9 @@ def run_dpir(settings, threads, stop_event, print_fn=print):
         dpir_thread.start()
         threads.append(dpir_thread)
     else:
-        from sensors.door_motion_sensor import run_dpir_loop, dpir
+        from sensors.door_motion_sensor import run_dpir_loop, DPIR
         print("Starting dpir loop")
-        dpir = dpir(settings['pin'])
+        dpir = DPIR(settings['pin'])
         dpir_thread = threading.Thread(target=run_dpir_loop, args=(dpir, stop_event, print_fn))
         dpir_thread.start()
         threads.append(dpir_thread)
