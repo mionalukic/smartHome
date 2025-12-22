@@ -6,6 +6,10 @@ from settings import load_settings
 from components.door_buzzer import run_db
 from components.door_motion_sensor import run_dpir
 from components.door_membrane_switch import run_dms
+from components.ds1 import run_ds1
+from components.dus1 import run_dus1
+from components.dl import run_dl
+
 
 try:
     import RPi.GPIO as GPIO
