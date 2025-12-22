@@ -11,6 +11,21 @@
         "DMS": {
             "simulated": true,
             "pin": 17
+        },
+       "DS1": {
+          "simulated": true,
+          "pin": 17
+        },
+        "DUS1": {
+          "simulated": true,
+          "trig": 23,
+          "echo": 24
+        },
+        "DL": {
+          "simulated": true,
+          "pin": 18,
+          "interval": 1
         }
     }
+ 
 }
