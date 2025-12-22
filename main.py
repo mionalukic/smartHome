@@ -6,9 +6,9 @@ from settings import load_settings
 from components.door_buzzer import run_db
 from components.door_motion_sensor import run_dpir
 from components.door_membrane_switch import run_dms
-from components.ds1 import run_ds1
-from components.dus1 import run_dus1
-from components.dl import run_dl
+from components.door_sensor1 import run_ds1
+from components.door_ultrasonic_sensor1 import run_dus1
+from components.door_light import run_dl
 
 
 try:
@@ -25,6 +25,9 @@ COMPONENT_COLORS = {
     "DB":     "\033[38;5;208m",  # orange
     "DPIR1":  "\033[38;5;39m",   # blue
     "DMS":    "\033[38;5;118m",  # green
+    "DUS1":   "\033[38;5;141m",  # purple,
+    "DS1":    "\033[38;5;214m",  # yellow/orange
+    "DL":     "\033[38;5;220m",  # yellow
 }
 RESET = "\033[0m"
 
@@ -49,6 +52,8 @@ def format_help():
         "  all                        - turn all actuators on\n"
         "  buzz on                    - turn buzzer on\n"
         "  buzz off                   - turn buzzer off\n"
+        "  led on                     - turn led on\n"
+        "  led off                    - turn led off\n"
         "  quit | exit | q            - stop and exit\n"
     )
 
@@ -120,6 +125,24 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads):
             else:
                 safe_print("Usage: buzz on | buzz off", component="SYSTEM")
 
+
+        elif op == "led":
+            sub = parts[1].lower() if len(parts) > 1 else ""
+            dl_settings = pi1_settings.get("DL", {})
+
+            if sub == "on":
+                run_dl(True, dl_settings, threads, stop_event,
+                    print_fn=lambda m: safe_print(m, component="DL")
+                )
+
+            elif sub == "off":
+                run_dl( False, dl_settings, threads,stop_event,
+                    print_fn=lambda m: safe_print(m, component="DL")
+                )
+
+            else:
+                safe_print("Usage: led on | led off", component="SYSTEM")
+
         else:
             safe_print(f"Unknown command: {cmd}", component="SYSTEM")
 
@@ -147,6 +170,18 @@ def main(args):
                     safe_print(f"{name} {cfg}", component=name)
                     run_dms(cfg, threads, stop_event,
                             print_fn=lambda m: safe_print(m, component="DMS"))
+                elif name == "DUS1":
+                    safe_print(f"{name} {cfg}", component=name)
+                    run_dus1(cfg, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DUS1")
+                    )
+                elif name == "DS1":
+                    safe_print(f"{name} {cfg}", component=name)
+                    run_ds1(cfg, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DS1")
+                    )
+
+
 
         command_loop(stop_event, actuator_registry, pi1_settings, threads)
 
