@@ -243,10 +243,10 @@ def main(args):
                 
                 elif name == "DUS1":
                     safe_print(f"{name} {cfg}", component=name)
-                    # run_dus1(cfg, threads, stop_event,
-                    #     print_fn=lambda m: safe_print(m, component="DUS1"),
-                    #     mqtt_publisher=mqtt_publisher
-                    # )
+                    run_dus1(cfg, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DUS1"),
+                        mqtt_publisher=mqtt_publisher
+                    )
                 
                 elif name == "DS1":
                     safe_print(f"{name} {cfg}", component=name)
