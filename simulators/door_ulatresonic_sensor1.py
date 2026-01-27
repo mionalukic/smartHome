@@ -11,15 +11,7 @@ def generate_values(initial_distance=120):
         yield distance
 
 def run_dus1_simulator(stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
-    """
-    Simulate door ultrasonic sensor measurements
-    
-    Args:
-        stop_event: Threading event for stopping
-        print_fn: Function for logging
-        mqtt_publisher: Optional MQTT publisher
-        device_id: Device identifier
-    """
+
     generator = generate_values()
     print_fn("Ultrasonic simulator started")
     
@@ -29,7 +21,6 @@ def run_dus1_simulator(stop_event, print_fn=print, mqtt_publisher=None, device_i
         
         print_fn(f"{time.ctime()} Distance: {distance} cm")
         
-        # Publish distance measurement to MQTT
         if mqtt_publisher and mqtt_publisher.connected:
             data = {
                 "device_id": device_id,

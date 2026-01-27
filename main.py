@@ -133,20 +133,15 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
                 if "DB" in actuator_registry:
                     safe_print("DB is already turned on", component="SYSTEM")
                 else:
-                    # freq = float(parts[2]) if len(parts) > 2 else 440.0
-                    # dur = float(parts[3]) if len(parts) > 3 else 0.0
-                    run_db(
-                        True, db_settings, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DB")
+                    run_db(db_settings, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DB"),
+                        mqtt_publisher=mqtt_publisher
                     )
                     actuator_registry.add("DB")
 
             elif sub == "off":
                 if "DB" in actuator_registry:
-                    run_db(
-                        False, db_settings, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DB")
-                    )
+                    safe_print("DB turned off", component="DB")
                     actuator_registry.discard("DB")
                 else:
                     safe_print("DB is already turned off", component="SYSTEM")
@@ -160,13 +155,17 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
             dl_settings = pi1_settings.get("DL", {})
 
             if sub == "on":
-                run_dl(True, dl_settings, threads, stop_event,
-                    print_fn=lambda m: safe_print(m, component="DL")
+                run_dl(dl_settings, threads, stop_event,
+                    print_fn=lambda m: safe_print(m, component="DL"),
+                    mqtt_publisher=mqtt_publisher,
+                    state=True
                 )
 
             elif sub == "off":
-                run_dl(False, dl_settings, threads, stop_event,
-                    print_fn=lambda m: safe_print(m, component="DL")
+                run_dl(dl_settings, threads, stop_event,
+                    print_fn=lambda m: safe_print(m, component="DL"),
+                    mqtt_publisher=mqtt_publisher,
+                    state=False
                 )
 
             else:
@@ -176,7 +175,6 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
             safe_print(f"Unknown command: {cmd}", component="SYSTEM")
 
 def setup_mqtt(settings):
-    """Setup MQTT publisher if enabled"""
     mqtt_config = MQTTConfig()
     
     safe_print("Setting up MQTT...", component="MQTT")
@@ -189,21 +187,19 @@ def setup_mqtt(settings):
         batch_interval=mqtt_config.batch_interval
     )
     
-    # Register topics
     for topic in mqtt_config.topics.values():
         mqtt_publisher.register_topic(topic)
     
-    # Try to connect
     if mqtt_publisher.connect():
-        time.sleep(1)  # Wait for connection to establish
+        time.sleep(1)  
         if mqtt_publisher.connected:
-            safe_print("✓ MQTT connected", component="MQTT")
+            safe_print("MQTT connected", component="MQTT")
             mqtt_publisher.start_batch_publisher()
             return mqtt_publisher
         else:
-            safe_print("⚠ MQTT connection failed", component="MQTT")
+            safe_print("MQTT connection failed", component="MQTT")
     else:
-        safe_print("⚠ Could not connect to MQTT broker", component="MQTT")
+        safe_print("Could not connect to MQTT broker", component="MQTT")
     
     return None
 
@@ -221,10 +217,8 @@ def main(args):
     actuator_registry = set()
 
     try:
-        # Setup MQTT
         mqtt_publisher = setup_mqtt(settings)
         
-        # Start sensors if requested
         if "--sensors" in args:
             for name, cfg in pi1_settings.items():
                 cfg = effective_cfg(name, cfg)
@@ -256,7 +250,7 @@ def main(args):
                     )
 
         safe_print("=" * 60, component="SYSTEM")
-        safe_print("✓ System running. Press Ctrl+C to stop.", component="SYSTEM")
+        safe_print("System running. Press Ctrl+C to stop.", component="SYSTEM")
         safe_print("=" * 60, component="SYSTEM")
 
         command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publisher)

@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-MQTT Subscriber for Smart Home System
-Displays all MQTT messages in color-coded console output
-"""
 import sys
 import json
 import time
@@ -10,7 +5,6 @@ import signal
 from datetime import datetime
 import paho.mqtt.client as mqtt
 
-# Color codes matching your main.py style
 COLORS = {
     "SUBSCRIBER": "\033[38;5;51m",   # bright cyan
     "DMS": "\033[38;5;118m",          # green
@@ -25,17 +19,13 @@ COLORS = {
 RESET = "\033[0m"
 
 def colored_print(message, color_key="SUBSCRIBER"):
-    """Print colored message"""
     color = COLORS.get(color_key, "")
     print(f"{color}[{color_key}] {message}{RESET}", flush=True)
 
 def format_timestamp():
-    """Format current timestamp"""
     return datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
 def get_component_from_topic(topic):
-    """Extract component name from topic"""
-    # Example: smarthome/pi1/sensors/dms -> DMS
     parts = topic.split('/')
     if len(parts) >= 4:
         component = parts[3].upper()
@@ -43,15 +33,12 @@ def get_component_from_topic(topic):
     return "UNKNOWN"
 
 def format_payload(payload_str):
-    """Format payload for display"""
     try:
         data = json.loads(payload_str)
         
-        # Extract key information
         component = data.get('component', 'UNKNOWN')
         sensor_type = data.get('sensor_type', '')
         
-        # Format based on sensor type
         if sensor_type == 'door_membrane_switch':
             key = data.get('key', '')
             event = data.get('event', '')
@@ -80,38 +67,32 @@ def format_payload(payload_str):
             return f"Distance: {distance}{unit}{sim_tag}", component
         
         else:
-            # Generic format
             return json.dumps(data, indent=2), component
     
     except json.JSONDecodeError:
         return payload_str, "UNKNOWN"
 
 def on_connect(client, userdata, flags, rc):
-    """Callback when connected to MQTT broker"""
     if rc == 0:
-        colored_print("✓ Connected to MQTT Broker", "SUCCESS")
+        colored_print("Connected to MQTT Broker", "SUCCESS")
         colored_print("Subscribing to: smarthome/#", "SUBSCRIBER")
         client.subscribe("smarthome/#")
         print("=" * 80)
     else:
-        colored_print(f"✗ Connection failed with code {rc}", "ERROR")
+        colored_print(f"Connection failed with code {rc}", "ERROR")
         sys.exit(1)
 
 def on_disconnect(client, userdata, rc):
-    """Callback when disconnected"""
     if rc != 0:
-        colored_print(f"✗ Unexpected disconnection (code {rc})", "ERROR")
+        colored_print(f"Unexpected disconnection (code {rc})", "ERROR")
 
 def on_message(client, userdata, msg):
-    """Callback when message received"""
     timestamp = format_timestamp()
     topic = msg.topic
     payload = msg.payload.decode()
     
-    # Format the message
     formatted_payload, component = format_payload(payload)
     
-    # Print with component color
     color_key = component if component in COLORS else "SUBSCRIBER"
     
     print(f"{COLORS.get(color_key, '')}[{component}] {timestamp} | {topic}{RESET}")
@@ -119,11 +100,9 @@ def on_message(client, userdata, msg):
     print()
 
 def main():
-    # Configuration
     broker = "localhost"
     port = 1883
     
-    # Allow custom broker/port from command line
     if len(sys.argv) > 1:
         broker = sys.argv[1]
     if len(sys.argv) > 2:
@@ -134,30 +113,27 @@ def main():
     colored_print(f"Broker: {broker}:{port}", "SUBSCRIBER")
     print("=" * 80)
     
-    # Create MQTT client
     client = mqtt.Client(client_id="smarthome_subscriber")
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
     
-    # Handle Ctrl+C gracefully
     def signal_handler(sig, frame):
         print("\n")
         colored_print("Stopping subscriber...", "SUBSCRIBER")
         client.disconnect()
         print("=" * 80)
-        colored_print("✓ Subscriber stopped", "SUCCESS")
+        colored_print("Subscriber stopped", "SUCCESS")
         print("=" * 80)
         sys.exit(0)
     
     signal.signal(signal.SIGINT, signal_handler)
     
-    # Connect and start loop
     try:
         client.connect(broker, port, 60)
         client.loop_forever()
     except Exception as e:
-        colored_print(f"✗ Error: {e}", "ERROR")
+        colored_print(f"Error: {e}", "ERROR")
         sys.exit(1)
 
 if __name__ == "__main__":

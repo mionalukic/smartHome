@@ -5,17 +5,7 @@ except ImportError:
     GPIO = None
 
 def run_dus1_ultrasonic(trig_pin, echo_pin, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
-    """
-    Run door ultrasonic sensor on real hardware
-    
-    Args:
-        trig_pin: GPIO pin for trigger
-        echo_pin: GPIO pin for echo
-        stop_event: Threading event for stopping
-        print_fn: Function for logging
-        mqtt_publisher: Optional MQTT publisher
-        device_id: Device identifier
-    """
+
     if GPIO is None:
         print_fn("GPIO not available, cannot run real ultrasonic sensor")
         return
@@ -26,7 +16,6 @@ def run_dus1_ultrasonic(trig_pin, echo_pin, stop_event, print_fn=print, mqtt_pub
     print_fn("Ultrasonic sensor (REAL) started")
     
     def get_distance():
-        """Measure distance using ultrasonic sensor"""
         GPIO.output(trig_pin, False)
         time.sleep(0.2)
         
@@ -59,7 +48,6 @@ def run_dus1_ultrasonic(trig_pin, echo_pin, stop_event, print_fn=print, mqtt_pub
         if distance is not None:
             print_fn(f"Distance: {distance} cm")
             
-            # Publish distance measurement to MQTT
             if mqtt_publisher and mqtt_publisher.connected:
                 data = {
                     "device_id": device_id,
@@ -77,7 +65,6 @@ def run_dus1_ultrasonic(trig_pin, echo_pin, stop_event, print_fn=print, mqtt_pub
         else:
             print_fn("Measurement timeout")
             
-            # Optionally publish timeout error to MQTT
             if mqtt_publisher and mqtt_publisher.connected:
                 data = {
                     "device_id": device_id,

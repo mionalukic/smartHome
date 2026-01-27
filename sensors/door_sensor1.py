@@ -12,7 +12,6 @@ class DS1(object):
         self.device_id = 'pi1'
         
     def setup(self, print_fn=print, mqtt_publisher=None, device_id='pi1'):
-        """Setup GPIO pin and event detection"""
         if GPIO is None:
             print_fn("GPIO not available, cannot setup door sensor")
             return
@@ -22,15 +21,12 @@ class DS1(object):
         self.mqtt_publisher = mqtt_publisher
         self.device_id = device_id
         
-        # Add event detection for door opening (button press)
         GPIO.add_event_detect(self.pin, GPIO.FALLING, callback=self.door_opened, bouncetime=200)
         GPIO.add_event_detect(self.pin, GPIO.RISING, callback=self.door_closed, bouncetime=200)
     
     def door_opened(self, channel):
-        """Callback when door opens"""
         self.print_fn("Door state: OPEN")
         
-        # Publish to MQTT if available
         if self.mqtt_publisher and self.mqtt_publisher.connected:
             data = {
                 "device_id": self.device_id,
@@ -46,10 +42,8 @@ class DS1(object):
             self.mqtt_publisher.publish(topic, data, use_batch=True)
     
     def door_closed(self, channel):
-        """Callback when door closes"""
         self.print_fn("Door state: CLOSED")
         
-        # Publish to MQTT if available
         if self.mqtt_publisher and self.mqtt_publisher.connected:
             data = {
                 "device_id": self.device_id,
@@ -65,16 +59,7 @@ class DS1(object):
             self.mqtt_publisher.publish(topic, data, use_batch=True)
 
 def run_ds1_button(pin, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
-    """
-    Main loop for door sensor
-    
-    Args:
-        pin: GPIO pin number
-        stop_event: Threading event for stopping
-        print_fn: Function for logging
-        mqtt_publisher: Optional MQTT publisher
-        device_id: Device identifier
-    """
+ 
     if GPIO is None:
         print_fn("GPIO not available, cannot run real door sensor")
         return
@@ -84,7 +69,6 @@ def run_ds1_button(pin, stop_event, print_fn=print, mqtt_publisher=None, device_
     
     print_fn("Door sensor (REAL) started")
     
-    # Keep thread alive while waiting for events
     while not stop_event.wait(1.0):
         pass
     

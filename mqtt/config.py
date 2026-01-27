@@ -3,7 +3,6 @@ import json
 from typing import Dict, Any
 
 class MQTTConfig:
-    """MQTT configuration loader"""
     
     def __init__(self, settings_file: str = "settings.json"):
         with open(settings_file, 'r') as f:
@@ -38,5 +37,4 @@ class MQTTConfig:
         return self.settings.get('device', {}).get('device_id', 'unknown')
     
     def get_sensor_topic(self, sensor_name: str) -> str:
-        """Get MQTT topic for specific sensor"""
         return self.settings.get('sensors', {}).get(sensor_name, {}).get('topic', f'sensors/{sensor_name}')

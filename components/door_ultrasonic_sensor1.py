@@ -3,16 +3,7 @@ from simulators.door_ulatresonic_sensor1 import run_dus1_simulator
 
 
 def run_dus1(settings, threads, stop_event, print_fn=print, mqtt_publisher=None):
-    """
-    Run door ultrasonic sensor
-    
-    Args:
-        settings: Configuration dict
-        threads: List to append thread to
-        stop_event: Threading event for stopping
-        print_fn: Function for logging
-        mqtt_publisher: Optional MQTT publisher for sending data
-    """
+
     if settings["simulated"]:
         t = threading.Thread(
             target=run_dus1_simulator,
