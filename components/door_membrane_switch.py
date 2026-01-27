@@ -2,16 +2,32 @@ from simulators.door_membrane_switch import run_dms_simulator
 import threading
 import time
 
-def run_dms(settings, threads, stop_event, print_fn=print):
+def run_dms(settings, threads, stop_event, print_fn=print, mqtt_publisher=None):
+    """
+    Run door membrane switch (keypad) sensor
+    
+    Args:
+        settings: Configuration dict
+        threads: List to append thread to
+        stop_event: Threading event for stopping
+        print_fn: Function for logging
+        mqtt_publisher: Optional MQTT publisher for sending data
+    """
     if settings['simulated']:
-        dms_thread = threading.Thread(target=run_dms_simulator, args=(stop_event, print_fn))
+        dms_thread = threading.Thread(
+            target=run_dms_simulator, 
+            args=(stop_event, print_fn, mqtt_publisher, settings.get('device_id', 'pi1'))
+        )
         dms_thread.start()
         threads.append(dms_thread)
     else:
         from sensors.door_membrane_switch import run_dms_loop, DMS
-        print("Starting dms loop")
-        dms = DMS(settings['pin'])
-        dms_thread = threading.Thread(target=run_dms_loop, args=(dms, stop_event, print_fn))
+        print_fn("Starting DMS loop")
+        dms = DMS(settings['button_pin'], settings['row_pin'])
+        dms_thread = threading.Thread(
+            target=run_dms_loop, 
+            args=(dms, stop_event, print_fn, mqtt_publisher, settings.get('device_id', 'pi1'))
+        )
         dms_thread.start()
         threads.append(dms_thread)
-        print("dms loop started")
+        print_fn("DMS loop started")

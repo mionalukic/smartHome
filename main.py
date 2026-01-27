@@ -231,9 +231,9 @@ def main(args):
 
                 if name == "DPIR1":
                     safe_print(f"{name} {cfg}", component=name)
-                    run_dpir(cfg, threads, stop_event,
-                             print_fn=lambda m: safe_print(m, component="DPIR1"),
-                             mqtt_publisher=mqtt_publisher)
+                    # run_dpir(cfg, threads, stop_event,
+                    #          print_fn=lambda m: safe_print(m, component="DPIR1"),
+                    #          mqtt_publisher=mqtt_publisher)
 
                 elif name == "DMS":
                     safe_print(f"{name} {cfg}", component=name)
@@ -243,17 +243,17 @@ def main(args):
                 
                 elif name == "DUS1":
                     safe_print(f"{name} {cfg}", component=name)
-                    run_dus1(cfg, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DUS1"),
-                        mqtt_publisher=mqtt_publisher
-                    )
+                    # run_dus1(cfg, threads, stop_event,
+                    #     print_fn=lambda m: safe_print(m, component="DUS1"),
+                    #     mqtt_publisher=mqtt_publisher
+                    # )
                 
                 elif name == "DS1":
                     safe_print(f"{name} {cfg}", component=name)
-                    run_ds1(cfg, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DS1"),
-                        mqtt_publisher=mqtt_publisher
-                    )
+                    # run_ds1(cfg, threads, stop_event,
+                    #     print_fn=lambda m: safe_print(m, component="DS1"),
+                    #     mqtt_publisher=mqtt_publisher
+                    # )
 
         safe_print("=" * 60, component="SYSTEM")
         safe_print("✓ System running. Press Ctrl+C to stop.", component="SYSTEM")
