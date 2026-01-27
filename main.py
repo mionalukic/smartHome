@@ -231,9 +231,9 @@ def main(args):
 
                 if name == "DPIR1":
                     safe_print(f"{name} {cfg}", component=name)
-                    # run_dpir(cfg, threads, stop_event,
-                    #          print_fn=lambda m: safe_print(m, component="DPIR1"),
-                    #          mqtt_publisher=mqtt_publisher)
+                    run_dpir(cfg, threads, stop_event,
+                             print_fn=lambda m: safe_print(m, component="DPIR1"),
+                             mqtt_publisher=mqtt_publisher)
 
                 elif name == "DMS":
                     safe_print(f"{name} {cfg}", component=name)
