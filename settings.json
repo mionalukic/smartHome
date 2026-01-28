@@ -1,31 +1,56 @@
 {
+    "device": {
+        "pi_name": "PI1",
+        "device_id": "pi1_door_001",
+        "location": "Main_Entrance"
+    },
+    "mqtt": {
+        "broker": "localhost",
+        "port": 1883,
+        "keepalive": 60,
+        "topics": {
+            "door_sensor": "sensors/door/button",
+            "door_light": "actuators/door/light",
+            "ultrasonic": "sensors/door/distance",
+            "buzzer": "actuators/door/buzzer",
+            "motion": "sensors/door/motion",
+            "membrane": "sensors/door/membrane"
+        }
+    },
+    "batch": {
+        "size": 10,
+        "interval_seconds": 5,
+        "max_queue_size": 100
+    },
+    "sampling": {
+        "interval_seconds": 2
+    },
     "PI1": {
         "DB": {
             "simulated": true,
-            "pin": 17
+            "pin": 25
         },
         "DPIR1": {
             "simulated": true,
-            "pin": 17
+            "pin": 27
         },
         "DMS": {
             "simulated": true,
+            "pin": 22
+        },
+        "DS1": {
+            "simulated": true,
             "pin": 17
         },
-       "DS1": {
-          "simulated": true,
-          "pin": 17
-        },
         "DUS1": {
-          "simulated": true,
-          "trig": 23,
-          "echo": 24
+            "simulated": true,
+            "trig": 23,
+            "echo": 24
         },
         "DL": {
-          "simulated": true,
-          "pin": 18,
-          "interval": 1
+            "simulated": true,
+            "pin": 18,
+            "interval": 1
         }
     }
- 
 }
