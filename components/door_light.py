@@ -14,13 +14,14 @@ def run_dl(settings, threads, stop_event, print_fn=print, mqtt_publisher=None, s
                     "device_id": settings.get('device_id', 'pi1'),
                     "sensor_type": "door_light",
                     "component": "DL",
-                    "state": state,
+                    "value": 1 if state else 0,   
                     "simulated": True,
                     "timestamp": time.time()
                 }
 
-                topic = f"smarthome/{settings.get('device_id', 'pi1')}/sensors/dl"
+                topic = f"smarthome/{settings.get('device_id', 'pi1')}/actuators/dl"
                 mqtt_publisher.publish(topic, data, use_batch=True)
+
         else:
             dl_thread = threading.Thread(
                 target=run_dl_simulator,

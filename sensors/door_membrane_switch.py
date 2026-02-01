@@ -2,17 +2,36 @@ import RPi.GPIO as GPIO
 import time
 
 class DMS(object):
-    def __init__(self, button_pin, row_pin):
-        self.button_pin = button_pin
-        self.row_pin = row_pin
+    def __init__(self,R1,R2,R3,R4,C1,C2,C3,C4):
+        self.R1=R1
+        self.R2=R2
+        self.R3=R3
+        self.R4=R4
+        self.C1=C1
+        self.C2=C2
+        self.C3=C3
+        self.C4=C4
         self.print_fn = print
         self.mqtt_publisher = None
         self.device_id = 'pi1'
         
     def setup(self, print_fn=print, mqtt_publisher=None, device_id='pi1'):
-        GPIO.setup(self.row_pin, GPIO.OUT)
-        GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.output(self.row_pin, GPIO.LOW)
+       # Initialize the GPIO pins
+
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+
+        GPIO.setup(self.R1, GPIO.OUT)
+        GPIO.setup(self.R2, GPIO.OUT)
+        GPIO.setup(self.R3, GPIO.OUT)
+        GPIO.setup(self.R4, GPIO.OUT)
+
+        # Make sure to configure the input pins to use the internal pull-down resistors
+
+        GPIO.setup(self.C1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(self.C2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(self.C3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(self.C4, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         
         self.print_fn = print_fn
         self.mqtt_publisher = mqtt_publisher
