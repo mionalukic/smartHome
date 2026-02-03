@@ -13,12 +13,12 @@ def run_db(settings, threads, stop_event, print_fn=print, mqtt_publisher=None, s
                     "device_id": settings.get('device_id', 'pi1'),
                     "sensor_type": "door_buzzer",
                     "component": "DB",
-                    "state": state,
+                    "value": 1 if state else 0,  
                     "simulated": True,
                     "timestamp": time.time()
                 }
 
-                topic = f"smarthome/{settings.get('device_id', 'pi1')}/sensors/db"
+                topic = f"smarthome/{settings.get('device_id', 'pi1')}/actuators/db"
                 mqtt_publisher.publish(topic, data, use_batch=True)
         else:
             db_thread = threading.Thread(

@@ -11,10 +11,34 @@ services:
       - ./data:/mosquitto/data:rw
       - ./log:/mosquitto/log:rw
 
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+      - DOCKER_INFLUXDB_INIT_ORG=ftn
+      - DOCKER_INFLUXDB_INIT_BUCKET=smarthome
+      - DOCKER_INFLUXDB_INIT_TOKEN=-8nLVK9TFpS07rO2Ci0spY3uGB12Vtv0c2RTbTr6xyzIgvWeO93HqTD2Sd4amjY1r3ozcn9_p3Kczy3BO0kWGQ==
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+
 volumes:
   config:
   data:
-  log:
+  log: 
+  influxdb-data:
 
 networks:
   default:
