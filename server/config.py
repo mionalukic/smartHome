@@ -8,4 +8,4 @@ INFLUX_ORG = "ftn"
 INFLUX_BUCKET = "smarthome"
 
 
-# grafana password iotprojekat
+# grafana password adminadmin
