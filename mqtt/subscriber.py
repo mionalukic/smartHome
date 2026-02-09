@@ -100,7 +100,7 @@ def on_message(client, userdata, msg):
     print()
 
 def main():
-    broker = "localhost"
+    broker = "192.168.107.197"
     port = 1883
     
     if len(sys.argv) > 1:

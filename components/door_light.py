@@ -32,4 +32,9 @@ def run_dl(settings, threads, stop_event, print_fn=print, mqtt_publisher=None, s
     else:
         from sensors.door_light import DL
         dl = DL(settings['pin'])
+        dl.setup(
+            print_fn,
+            mqtt_publisher,
+            settings.get('device_id', 'pi1')
+        )
         dl.set_state(state, print_fn, mqtt_publisher, settings.get('device_id', 'pi1'))

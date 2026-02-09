@@ -1,6 +1,3 @@
-
-
-
 import logging
 import threading
 import time
@@ -11,10 +8,16 @@ from components.door_buzzer import run_db
 from components.door_motion_sensor import run_dpir
 from components.door_membrane_switch import run_dms
 from components.door_sensor1 import run_ds1
-from components.door_ultrasonic_sensor1 import run_dus1
 from components.door_light import run_dl
 from mqtt.publisher import MQTTPublisher
 from mqtt.config import MQTTConfig
+from components.door_sensor2 import run_ds2
+from components.door_ultrasonic_sensor import run_dus
+from components.kitchen_button import run_kitchen_button
+from components.kitchen_4sd import run_kitchen_4sd
+from components.kitchen_dht import run_kitchen_dht
+from components.kitchen_gsg import run_kitchen_gsg
+
 
 
 try:
@@ -41,8 +44,34 @@ COMPONENT_COLORS = {
     "DUS1":   "\033[38;5;141m",  # purple,
     "DS1":    "\033[38;5;214m",  # yellow/orange
     "DL":     "\033[38;5;220m",  # yellow
+    "DS2":    "\033[38;5;214m",
+    "DPIR2":  "\033[38;5;39m",
+    "DUS2":   "\033[38;5;141m",
+    "BTN":    "\033[38;5;82m", 
+    "4SD":    "\033[38;5;203m",
+    "DHT3":   "\033[38;5;44m",  # tirkiz
+    "GSG":    "\033[38;5;199m",  # ljubičasta / alarm
+
+
 }
 RESET = "\033[0m"
+
+def parse_arg(args, key, default=None):
+    if key in args:
+        i = args.index(key)
+        if i + 1 < len(args):
+            return args[i + 1]
+    return default
+
+def get_pi_context(settings, args):
+    pi_name = parse_arg(args, "--pi", settings.get("device", {}).get("pi_name", "PI1"))
+    device = dict(settings.get("device", {}))
+    device["pi_name"] = pi_name
+    # opcionalno: device_id možeš da razlikuješ po PI
+    # device["device_id"] = device.get("device_id", "pi_unknown").replace("pi1", pi_name.lower())
+    pi_settings = settings.get(pi_name, {})
+    return pi_name, device, pi_settings
+
 
 def safe_print(message, *, component="SYSTEM", end="\n"):
     color = COMPONENT_COLORS.get(component, "")
@@ -75,6 +104,7 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
     safe_print("Console ready. Type 'help' for commands.", component="SYSTEM")
 
     db_settings = pi1_settings.get("DB", {})
+    safe_print(db_settings, component="SYSTEM")
 
     while not stop_event.is_set():
         try:
@@ -120,22 +150,23 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
 
         elif op == "all":
             if "DB" not in actuator_registry:
-                run_db(
-                    True, db_settings, threads, stop_event,
-                    print_fn=lambda m: safe_print(m, component="DB")
-                )
+                run_db(db_settings, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DB"),
+                        mqtt_publisher=mqtt_publisher, state='on'
+                    )
                 actuator_registry.add("DB")
 
         elif op == "buzz":
             sub = parts[1].lower() if len(parts) > 1 else ""
-
+            safe_print(f"Buzz command: {sub}", component="SYSTEM")
             if sub == "on":
                 if "DB" in actuator_registry:
                     safe_print("DB is already turned on", component="SYSTEM")
                 else:
+                    safe_print("ovde sam")
                     run_db(db_settings, threads, stop_event,
                         print_fn=lambda m: safe_print(m, component="DB"),
-                        mqtt_publisher=mqtt_publisher
+                        mqtt_publisher=mqtt_publisher, state=True
                     )
                     actuator_registry.add("DB")
 
@@ -204,56 +235,89 @@ def setup_mqtt(settings):
     return None
 
 def main(args):
-    safe_print("=" * 60, component="SYSTEM")
-    safe_print("Starting Smart Home System - PI1", component="SYSTEM")
-    safe_print("=" * 60, component="SYSTEM")
+    
 
     settings = load_settings()
-    pi1_settings = settings.get("PI1", {})
+    pi_name, device, pi_settings = get_pi_context(settings, args)
     threads = []
     stop_event = threading.Event()
     mqtt_publisher = None
-
+    
+    safe_print("=" * 60, component="SYSTEM")
+    safe_print(f"Starting Smart Home System - {pi_name}", component="SYSTEM")
+    safe_print("=" * 60, component="SYSTEM")
+    
     actuator_registry = set()
 
     try:
         mqtt_publisher = setup_mqtt(settings)
         
         if "--sensors" in args:
-            for name, cfg in pi1_settings.items():
+            for name, cfg in pi_settings.items():
                 cfg = effective_cfg(name, cfg)
+                
 
-                if name == "DPIR1":
-                    safe_print(f"{name} {cfg}", component=name)
+                if name.startswith("DPIR"):
+                    safe_print(f"{name} {cfg}", component=name if name in COMPONENT_COLORS else "SYSTEM")
                     run_dpir(cfg, threads, stop_event,
-                             print_fn=lambda m: safe_print(m, component="DPIR1"),
-                             mqtt_publisher=mqtt_publisher)
-
+                            print_fn=lambda m, n=name: safe_print(m, component=n),
+                            mqtt_publisher=mqtt_publisher)
+                    
                 elif name == "DMS":
-                    safe_print(f"{name} {cfg}", component=name)
+                    safe_print(f"{name} {cfg}", component="DMS")
                     run_dms(cfg, threads, stop_event,
                             print_fn=lambda m: safe_print(m, component="DMS"),
                             mqtt_publisher=mqtt_publisher)
-                
-                elif name == "DUS1":
-                    safe_print(f"{name} {cfg}", component=name)
-                    run_dus1(cfg, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DUS1"),
-                        mqtt_publisher=mqtt_publisher
-                    )
-                
+
+                elif name.startswith("DUS"):
+                    safe_print(f"{name} {cfg}", component=name if name in COMPONENT_COLORS else "SYSTEM")
+                    run_dus(cfg, threads, stop_event,
+                            print_fn=lambda m, n=name: safe_print(m, component=n),
+                            mqtt_publisher=mqtt_publisher)
+
+
                 elif name == "DS1":
-                    safe_print(f"{name} {cfg}", component=name)
-                    run_ds1(cfg, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DS1"),
-                        mqtt_publisher=mqtt_publisher
-                    )
+                    safe_print(f"{name} {cfg}", component="DS1")
+                    run_ds1(cfg, threads, stop_event,  
+                            print_fn=lambda m, n=name: safe_print(m, component="DS1"),
+                            mqtt_publisher=mqtt_publisher)
+                    
+                elif name == "DS2":
+                    safe_print(f"{name} {cfg}", component="DS2")
+                    run_ds2(cfg, threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="DS2"),
+                            mqtt_publisher=mqtt_publisher)
+                    
+                elif name == "BTN":
+                    safe_print(f"{name} {cfg}", component="BTN")
+                    run_kitchen_button(cfg, threads, stop_event,
+                                    print_fn=lambda m: safe_print(m, component="BTN"),
+                                    mqtt_publisher=mqtt_publisher)
+                elif name == "4SD":
+                    safe_print(f"{name} {cfg}", component="4SD")
+                    run_kitchen_4sd(cfg, threads, stop_event,
+                                    print_fn=lambda m: safe_print(m, component="4SD"))
+                    
+                elif name == "DHT3":
+                    safe_print(f"{name} {cfg}", component="DHT3")
+                    run_kitchen_dht(cfg, threads, stop_event,
+                                    print_fn=lambda m: safe_print(m, component="DHT3"),
+                                    mqtt_publisher=mqtt_publisher)
+                    
+                elif name == "GSG":
+                    safe_print(f"{name} {cfg}", component="GSG")
+                    run_kitchen_gsg(cfg, threads, stop_event,
+                                    print_fn=lambda m: safe_print(m, component="GSG"),
+                                    mqtt_publisher=mqtt_publisher)
+
+
+
 
         safe_print("=" * 60, component="SYSTEM")
         safe_print("System running. Press Ctrl+C to stop.", component="SYSTEM")
         safe_print("=" * 60, component="SYSTEM")
 
-        command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publisher)
+        command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher)
 
     except KeyboardInterrupt:
         safe_print("Stopping app (KeyboardInterrupt)", component="SYSTEM")

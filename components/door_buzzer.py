@@ -1,11 +1,14 @@
+import time
 from simulators.door_buzzer import run_db_simulator
 import threading
 
 def run_db(settings, threads, stop_event, print_fn=print, mqtt_publisher=None, state=None):
-
+    print_fn(state)
+    print_fn(f"DB state: {state}")
+    print(settings.get('simulated', True))
     if settings.get('simulated', True):
         if state is not None:
-            state_str = "ON" if state else "OFF"
+            state_str = "on" if state else "off"
             print_fn(f"Buzzer turned {state_str} (simulated)")
 
             if mqtt_publisher and mqtt_publisher.connected:
@@ -28,6 +31,8 @@ def run_db(settings, threads, stop_event, print_fn=print, mqtt_publisher=None, s
             db_thread.start()
             threads.append(db_thread)
     else:
+        print_fn(state)
+        print_fn(f"DB state: {state}")
         if state:
             from sensors.door_buzzer import run_db_loop, DB
             print_fn("Starting DB buzzing")

@@ -10,7 +10,7 @@ class MQTTConfig:
     
     @property
     def broker(self) -> str:
-        return self.settings.get('mqtt', {}).get('broker', 'localhost')
+        return self.settings.get('mqtt', {}).get('broker', '192.168.107.197')
     
     @property
     def port(self) -> int:
