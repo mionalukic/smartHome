@@ -1,0 +1,109 @@
+{
+    "mqtt": {
+        "broker": "localhost",
+        "port": 1883,
+        "keepalive": 60,
+        "topics": {
+            "door_sensor": "sensors/door/button",
+            "door_light": "actuators/door/light",
+            "ultrasonic": "sensors/door/distance",
+            "buzzer": "actuators/door/buzzer",
+            "motion": "sensors/door/motion",
+            "membrane": "sensors/door/membrane"
+        }
+    },
+    "batch": {
+        "size": 10,
+        "interval_seconds": 5,
+        "max_queue_size": 100
+    },
+    "sampling": {
+        "interval_seconds": 2
+    },
+    "PI1":{
+        "device": {
+            "device_id": "pi1_door_001",
+            "location": "Main_Entrance"
+        },
+        "DB": {
+            "simulated": true,
+            "pin": 17
+        },
+        "DPIR1": {
+            "simulated": true,
+            "component": "DPIR1",
+            "pin": 27
+        },
+        "DMS": {
+            "simulated": true,
+            "R1": 25,
+            "R2": 8,
+            "R3": 7,
+            "R4": 1,
+            "C1": 12,
+            "C2": 16,
+            "C3": 20,
+            "C4": 21
+
+        },
+        "DS1": {
+            "simulated": true,
+            "pin": 17
+        },
+        "DUS1": {
+            "simulated": true,
+            "component": "DUS1",
+            "trig": 4,
+            "echo": 17
+        },
+        "DL": {
+            "simulated": true,
+            "pin": 18,
+            "interval": 1
+        }
+    },
+
+    "PI2": {
+        "device": {
+            "device_id": "pi2_kitchen_001",
+            "location": "Kitchen"
+        },
+        "DS2": { "simulated": true, "pin": 5 },
+         "DPIR2": {
+            "simulated": true,
+            "component": "DPIR2",
+            "pin": 6
+        },
+        "DUS2": {
+            "simulated": true,
+            "component": "DUS2",
+            "trig": 23,
+            "echo": 24
+        },
+        "BTN": {
+            "simulated": true,
+            "component": "BTN",
+            "pin": 13  
+        },
+        "4SD": {
+            "simulated": true,
+            "component": "4SD",
+            "segments": [11, 4, 23, 8, 7, 10, 18, 25],
+            "digits":   [22, 27, 17, 24],
+            "refresh_ms": 1
+        },
+        "DHT3": {
+            "simulated": true,
+            "component": "DHT3",
+            "pin": 17,
+            "interval": 2
+        },
+        "GSG": {
+            "simulated": true,
+            "component": "GSG",
+            "interval": 0.5,
+            "threshold": 20000
+        }
+        
+    }
+}
