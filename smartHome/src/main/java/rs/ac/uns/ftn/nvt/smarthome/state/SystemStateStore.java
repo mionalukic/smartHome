@@ -12,10 +12,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SystemStateStore {
 
     @Getter @Setter
-    private boolean alarmActive = false;
+    private SecurityMode mode = SecurityMode.DISARMED;
 
-    @Getter @Setter
-    private boolean systemArmed = false;
+    public boolean isArmed() { return mode == SecurityMode.ARMED; }
+    public boolean isAlarm() { return mode == SecurityMode.ALARM; }
+    public boolean isDisarmed() { return mode == SecurityMode.DISARMED; }
+
+
 
     @Getter @Setter
     private int peopleCount = 0;

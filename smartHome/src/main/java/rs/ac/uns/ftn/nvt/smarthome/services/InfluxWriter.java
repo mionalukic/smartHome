@@ -41,6 +41,12 @@ public class InfluxWriter {
         switch (measurement) {
 
             case "door_sensor":
+                if (event.getState() != null) {
+                    point.addField("value",
+                            "open".equalsIgnoreCase(event.getState()) ? 1 : 0);
+                }
+                break;
+
             case "door_motion_sensor":
             case "door_light":
             case "kitchen_button":
@@ -102,6 +108,14 @@ public class InfluxWriter {
 
                 point.addField("value", active);
                 break;
+
+            case "security_event":
+                if (event.getValue() != null) {
+                    point.addField("detail", event.getValue().toString());
+                }
+                point.addField("state", event.getState() != null ? event.getState() : "unknown");
+                break;
+
 
             default:
 

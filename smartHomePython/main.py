@@ -2,6 +2,7 @@ import logging
 import threading
 import time
 import sys
+import json
 
 from settings import load_settings
 from components.door_buzzer import run_db
@@ -18,6 +19,7 @@ from components.kitchen_4sd import run_kitchen_4sd
 from components.kitchen_dht import run_kitchen_dht
 from components.kitchen_gsg import run_kitchen_gsg
 from mqtt.actuator_listener import start_actuator_listener
+
 
 
 try:
@@ -80,6 +82,39 @@ def safe_print(message, *, component="SYSTEM", end="\n"):
     with _console_lock:
         print(f"{color}[{component}] {message}{RESET}", end=end, flush=True)
 
+def simulate_door(mqtt_publisher, device_id, state):
+    payload = {
+        "device_id": device_id,
+        "sensor_type": "door_sensor",
+        "component": "DS1",
+        "state": state,
+        "simulated": True,
+        "timestamp": time.time()
+    }
+    topic = f"smarthome/{device_id}/sensors/door"
+    mqtt_publisher.publish(topic, payload)
+    safe_print(f"Door simulated: {state}", component="DS1")
+
+
+def simulate_pin(mqtt_publisher, device_id, pin):
+
+    topic = f"smarthome/{device_id}/sensors/dms"
+
+    for digit in pin:
+        payload = {
+            "device_id": device_id,
+            "sensor_type": "door_membrane_switch",
+            "component": "DMS",
+            "key": digit,
+            "simulated": True,
+            "timestamp": time.time()
+        }
+
+        mqtt_publisher.publish(topic, payload)
+        safe_print(f"PIN digit sent: {digit}", component="DMS")
+        time.sleep(0.4)
+
+
 def effective_cfg(name, cfg):
     sim = cfg.get("simulated", True)
     if not GPIO_AVAILABLE and not sim:
@@ -100,9 +135,12 @@ def format_help():
         "  led on                     - turn led on\n"
         "  led off                    - turn led off\n"
         "  quit | exit | q            - stop and exit\n"
+        "  door open                  - simulate door open\n"
+        "  door close                 - simulate door close\n"
+        "  pin <code>                 - send PIN sequence\n"
     )
 
-def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publisher=None):
+def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publisher=None, device_id=None):
     safe_print("Console ready. Type 'help' for commands.", component="SYSTEM")
 
     db_settings = pi1_settings.get("DB", {})
@@ -203,6 +241,26 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
 
             else:
                 safe_print("Usage: led on | led off", component="SYSTEM")
+
+        elif op == "door":
+            sub = parts[1].lower() if len(parts) > 1 else ""
+
+            if sub == "open":
+                simulate_door(mqtt_publisher, device_id, "open")
+
+            elif sub == "close":
+                simulate_door(mqtt_publisher, device_id, "closed")
+
+            else:
+                safe_print("Usage: door open | door close", component="SYSTEM")
+
+
+        elif op == "pin":
+            if len(parts) > 1:
+                simulate_pin(mqtt_publisher, device_id, parts[1])
+            else:
+                safe_print("Usage: pin <code>", component="SYSTEM")
+
 
         else:
             safe_print(f"Unknown command: {cmd}", component="SYSTEM")
@@ -332,7 +390,7 @@ def main(args):
         safe_print("System running. Press Ctrl+C to stop.", component="SYSTEM")
         safe_print("=" * 60, component="SYSTEM")
 
-        command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher)
+        command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher,device_id)
 
     except KeyboardInterrupt:
         safe_print("Stopping app (KeyboardInterrupt)", component="SYSTEM")
