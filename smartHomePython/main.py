@@ -124,6 +124,7 @@ def effective_cfg(name, cfg):
         cfg["simulated"] = True
     return cfg
 
+#TODO: brgb and lcd - actuators
 def format_help():
     return (
         "Commands:\n"
@@ -135,17 +136,17 @@ def format_help():
         "  buzz off                   - turn buzzer off\n"
         "  led on                     - turn led on\n"
         "  led off                    - turn led off\n"
-        "  quit | exit | q            - stop and exit\n"
         "  door open                  - simulate door open\n"
         "  door close                 - simulate door close\n"
         "  pin <code>                 - send PIN sequence\n"
+        "  quit | exit | q            - stop and exit\n"
     )
 
-def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publisher=None, device_id=None):
+def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher=None, device_id=None):
     safe_print("Console ready. Type 'help' for commands.", component="SYSTEM")
 
-    db_settings = pi1_settings.get("DB", {})
-    safe_print(db_settings, component="SYSTEM")
+    db_settings = pi_settings.get("DB", {})
+    # safe_print(db_settings, component="SYSTEM")
 
     while not stop_event.is_set():
         try:
@@ -189,13 +190,23 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
             else:
                 safe_print("Usage: mqtt status", component="SYSTEM")
 
+#TODO: add brgb and lcd
         elif op == "all":
-            if "DB" not in actuator_registry:
-                run_db(db_settings, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DB"),
+            if pi_settings.get("device").get("device_id") == "pi1_door_001":
+                if "DB" not in actuator_registry:
+                    run_db(pi_settings.get("DB"), threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="DB"),
+                            mqtt_publisher=mqtt_publisher, state='on'
+                        )
+                    actuator_registry.add("DB")
+                if "DL" not in actuator_registry:
+                    run_dl(pi_settings.get("DL", {}), threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DL"),
                         mqtt_publisher=mqtt_publisher, state='on'
                     )
-                actuator_registry.add("DB")
+                    actuator_registry.add("DL")
+            if pi_settings.get("device").get("device_id") == "pi3_bedroom_001":
+                pass
 
         elif op == "buzz":
             sub = parts[1].lower() if len(parts) > 1 else ""
@@ -224,7 +235,7 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
 
         elif op == "led":
             sub = parts[1].lower() if len(parts) > 1 else ""
-            dl_settings = pi1_settings.get("DL", {})
+            dl_settings = pi_settings.get("DL", {})
 
             if sub == "on":
                 run_dl(dl_settings, threads, stop_event,
