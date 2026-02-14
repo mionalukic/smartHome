@@ -128,6 +128,15 @@
             "component": "DHT2",
             "pin": 18,
             "interval": 2
+        },
+        "LCD1": {
+            "component": "LCD",
+            "simulated": false,
+            "i2c_address": "0x27",
+            "cols": 16,
+            "rows": 2,
+            "backlight": true,
+            "refresh_interval": 5
         }
     }
 }
