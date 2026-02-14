@@ -2,8 +2,14 @@ import time
 import random
 
 
-def run_lcd_simulator(stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
-    print_fn("LCD simulator started")
+def run_lcd_simulator(settings, stop_event, print_fn=print,
+                      mqtt_publisher=None, device_id='pi1'):
+
+    cols = settings.get("cols", 16)
+    rows = settings.get("rows", 2)
+    refresh = settings.get("refresh_interval", 5)
+
+    print_fn(f"LCD simulator started ({cols}x{rows})")
 
     messages = [
         ("Smart Home", "System Ready"),
@@ -15,15 +21,18 @@ def run_lcd_simulator(stop_event, print_fn=print, mqtt_publisher=None, device_id
     ]
 
     while not stop_event.is_set():
-        time.sleep(random.randrange(5, 12))
+        time.sleep(refresh)
 
         if stop_event.is_set():
             break
 
         line1, line2 = random.choice(messages)
-        timestamp = time.time()
 
-        print_fn(f"{time.ctime()} LCD display:\n{line1}\n{line2}")
+        # Trim to LCD size
+        line1 = line1[:cols]
+        line2 = line2[:cols]
+
+        print_fn(f"[SIM LCD]\n{line1}\n{line2}")
 
         if mqtt_publisher and mqtt_publisher.connected:
             data = {
@@ -33,7 +42,7 @@ def run_lcd_simulator(stop_event, print_fn=print, mqtt_publisher=None, device_id
                 "line1": line1,
                 "line2": line2,
                 "simulated": True,
-                "timestamp": timestamp
+                "timestamp": time.time()
             }
 
             topic = f"smarthome/{device_id}/sensors/lcd"

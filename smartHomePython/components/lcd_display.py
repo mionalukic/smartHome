@@ -3,11 +3,14 @@ import threading
 from simulators.lcd_display import run_lcd_simulator
 
 
-def run_lcd(settings, threads, stop_event, print_fn=print, mqtt_publisher=None, state=None):
+def run_lcd(settings, threads, stop_event,
+            print_fn=print, mqtt_publisher=None, state=None):
 
-    print_fn(f"LCD state: {state}")
-    simulated = settings.get('simulated', True)
-    device_id = settings.get('device_id', 'pi1')
+    device_id = settings.get("device_id", "pi1")
+    simulated = settings.get("simulated", True)
+
+    print_fn(f"LCD state: {state} | simulated={simulated}")
+
 
     if simulated:
 
@@ -18,7 +21,7 @@ def run_lcd(settings, threads, stop_event, print_fn=print, mqtt_publisher=None, 
             if mqtt_publisher and mqtt_publisher.connected:
                 data = {
                     "device_id": device_id,
-                    "sensor_type": "lcd_display",
+                    "device": "lcd_display",
                     "component": "LCD",
                     "value": 1 if state else 0,
                     "simulated": True,
@@ -31,29 +34,27 @@ def run_lcd(settings, threads, stop_event, print_fn=print, mqtt_publisher=None, 
         else:
             lcd_thread = threading.Thread(
                 target=run_lcd_simulator,
-                args=(stop_event, print_fn, mqtt_publisher, device_id)
+                args=(settings, stop_event, print_fn,
+                      mqtt_publisher, device_id)
             )
             lcd_thread.start()
             threads.append(lcd_thread)
 
     else:
-        print_fn(f"LCD state: {state}")
-
         if state:
             from sensors.lcd.lcd_display import run_lcd_loop, LCD
 
-            print_fn("Starting real LCD display")
-
-            lcd = LCD()
+            lcd = LCD(settings)
 
             lcd_thread = threading.Thread(
                 target=run_lcd_loop,
-                args=(lcd, stop_event, print_fn, mqtt_publisher, device_id)
+                args=(lcd, settings, stop_event,
+                      print_fn, mqtt_publisher, device_id)
             )
             lcd_thread.start()
-
             threads.append(lcd_thread)
-            print_fn("LCD started")
+
+            print_fn("Real LCD started")
 
         else:
             print_fn("LCD turned off")
