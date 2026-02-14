@@ -16,11 +16,12 @@ from components.door_sensor2 import run_ds2
 from components.door_ultrasonic_sensor import run_dus
 from components.kitchen_button import run_kitchen_button
 from components.kitchen_4sd import run_kitchen_4sd
-from components.kitchen_dht import run_kitchen_dht
+from components.dht import run_dht
 from components.kitchen_gsg import run_kitchen_gsg
 from mqtt.actuator_listener import start_actuator_listener
-
-
+from components.lcd_display import on_dht_message, run_lcd
+import paho.mqtt.client as mqtt
+from mqtt.subscriber import on_disconnect, on_disconnect, on_message, on_connect
 
 try:
     import RPi.GPIO as GPIO
@@ -56,6 +57,7 @@ COMPONENT_COLORS = {
     "DPIR3":  "\033[38;5;160m",   # red
     "DHT1":   "\033[38;5;129m",   # orchid / magenta
     "DHT2":   "\033[38;5;190m",   # chartreuse (žuto-zelena)
+    "LCD":    "\033[38;5;51m",   # bright cyan
 }
 RESET = "\033[0m"
 
@@ -139,6 +141,8 @@ def format_help():
         "  door open                  - simulate door open\n"
         "  door close                 - simulate door close\n"
         "  pin <code>                 - send PIN sequence\n"
+        "  lcd on                     - turn LCD on\n"
+        "  lcd off                    - turn LCD off\n"
         "  quit | exit | q            - stop and exit\n"
     )
 
@@ -206,7 +210,12 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                     )
                     actuator_registry.add("DL")
             if pi_settings.get("device").get("device_id") == "pi3_bedroom_001":
-                pass
+                if "LCD" not in actuator_registry:
+                    run_lcd(pi_settings.get("LCD1", {}), threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="LCD"),
+                            mqtt_publisher=mqtt_publisher,
+                            state=True)
+                    actuator_registry.add("LCD")
 
         elif op == "buzz":
             sub = parts[1].lower() if len(parts) > 1 else ""
@@ -272,8 +281,28 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                 simulate_pin(mqtt_publisher, device_id, parts[1])
             else:
                 safe_print("Usage: pin <code>", component="SYSTEM")
+        elif op == "lcd":
+            sub = parts[1].lower() if len(parts) > 1 else ""
+            lcd_settings = pi_settings.get("LCD", {})
 
+            if sub == "on":
+                run_lcd(lcd_settings, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="LCD"),
+                        mqtt_publisher=mqtt_publisher,
+                        state=True)
 
+                actuator_registry.add("LCD")
+
+            elif sub == "off":
+                run_lcd(lcd_settings, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="LCD"),
+                        mqtt_publisher=mqtt_publisher,
+                        state=False)
+
+                actuator_registry.discard("LCD")
+
+            else:
+                safe_print("Usage: lcd on | lcd off", component="SYSTEM")
         else:
             safe_print(f"Unknown command: {cmd}", component="SYSTEM")
 
@@ -298,6 +327,7 @@ def setup_mqtt(settings):
         if mqtt_publisher.connected:
             safe_print("MQTT connected", component="MQTT")
             mqtt_publisher.start_batch_publisher()
+            mqtt_client = create_mqtt_client("localhost", 1883)
             return mqtt_publisher
         else:
             safe_print("MQTT connection failed", component="MQTT")
@@ -305,6 +335,17 @@ def setup_mqtt(settings):
         safe_print("Could not connect to MQTT broker", component="MQTT")
     
     return None
+    
+
+def create_mqtt_client(broker="localhost", port=1883):
+    client = mqtt.Client(client_id="smarthome_main")
+
+    client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
+    client.connect(broker, port, 60)
+    client.loop_start()
+
+    return client
 
 def main(args):
     
@@ -334,6 +375,7 @@ def main(args):
             stop_event,
             run_db,
             run_dl,
+            run_lcd,
             safe_print
         )
         
@@ -361,7 +403,8 @@ def main(args):
                     
                 elif name.startswith("DHT"):
                     safe_print(f"{name} {cfg}", component=name if name in COMPONENT_COLORS else "SYSTEM")
-                    run_kitchen_dht(cfg, threads, stop_event,
+
+                    run_dht(cfg, threads, stop_event,
                                     print_fn=lambda m, n=name: safe_print(m, component=n),
                                     mqtt_publisher=mqtt_publisher,device_id=device_id)
                     
@@ -404,19 +447,16 @@ def main(args):
         safe_print("Stopping app (KeyboardInterrupt)", component="SYSTEM")
         stop_event.set()
     finally:
-        # Stop MQTT
         if mqtt_publisher:
             safe_print("Disconnecting MQTT...", component="MQTT")
             mqtt_publisher.disconnect()
         
-        # Join threads
         for t in threads:
             try:
                 t.join(timeout=2.0)
             except Exception:
                 pass
 
-        # Cleanup GPIO
         if GPIO_AVAILABLE:
             try:
                 GPIO.cleanup()

@@ -131,7 +131,7 @@
         },
         "LCD1": {
             "component": "LCD",
-            "simulated": false,
+            "simulated": true,
             "i2c_address": "0x27",
             "cols": 16,
             "rows": 2,

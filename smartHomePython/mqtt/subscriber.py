@@ -4,6 +4,7 @@ import time
 import signal
 from datetime import datetime
 import paho.mqtt.client as mqtt
+from components.lcd_display import on_dht_message
 
 COLORS = {
     "SUBSCRIBER": "\033[38;5;51m",   # bright cyan
@@ -77,6 +78,21 @@ def on_connect(client, userdata, flags, rc):
         colored_print("Connected to MQTT Broker", "SUCCESS")
         colored_print("Subscribing to: smarthome/#", "SUBSCRIBER")
         client.subscribe("smarthome/#")
+        client.message_callback_add(
+            "smarthome/pi3_bedroom_001/sensors/dht1",
+            lambda client, userdata, msg: on_dht_message(json.loads(msg.payload.decode()))
+        )
+
+        client.message_callback_add(
+            "smarthome/pi3_bedroom_001/sensors/dht2",
+            lambda client, userdata, msg: on_dht_message(json.loads(msg.payload.decode()))
+        )
+
+        client.message_callback_add(
+            "smarthome/pi2_kitchen_001/sensors/dht3",
+            lambda client, userdata, msg: on_dht_message(json.loads(msg.payload.decode()))
+        )
+
         print("=" * 80)
     else:
         colored_print(f"Connection failed with code {rc}", "ERROR")

@@ -1,6 +1,6 @@
 import time
-from PCF8574 import PCF8574_GPIO
-from Adafruit_LCD1602 import Adafruit_CharLCD
+from .PCF8574 import PCF8574_GPIO
+from .Adafruit_LCD1602 import Adafruit_CharLCD
 
 
 class LCD:
@@ -20,7 +20,6 @@ class LCD:
         self.mqtt_publisher = mqtt_publisher
         self.device_id = device_id
 
-        # Try both common I2C addresses
         try:
             self.mcp = PCF8574_GPIO(0x27)
         except:
@@ -65,21 +64,20 @@ class LCD:
         self.lcd.clear()
         self.lcd.message(f"{line1}\n{line2}")
 
+    def lcd_thread_func(lcd, sensor_keys, stop_event,
+        print_fn=print, dht_data=None, refresh=5):
+        index = 0
+        while not stop_event.is_set():
+            sensor_name = sensor_keys[index]
+            temp, hum = dht_data.get(sensor_name, (0.0, 0.0))
 
-def run_lcd_loop(lcd, settings, stop_event,
-                 print_fn=print, mqtt_publisher=None, device_id="pi1"):
+            lcd.display(
+                line1=f"{sensor_name} Temp:",
+                line2=f"{temp:.1f}C Hum:{hum:.1f}%"
+            )
 
-    lcd.setup(print_fn, mqtt_publisher, device_id)
-    print_fn("Real LCD ready")
+            index = (index + 1) % len(sensor_keys)
+            time.sleep(refresh)
 
-    counter = 0
-    while not stop_event.is_set():
-        lcd.display_message(
-            f"Smart Home",
-            f"Counter: {counter}"
-        )
-        counter += 1
-        time.sleep(5)
-
-    lcd.lcd.clear()
-    print_fn("LCD stopped")
+        lcd.lcd.clear()
+        print_fn("LCD stopped")
