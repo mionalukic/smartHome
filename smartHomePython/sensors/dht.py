@@ -7,7 +7,7 @@ except ImportError:
     DHT = None
 
 
-def run_kitchen_dht(pin, stop_event, print_fn=print,
+def run_dht(pin, stop_event, print_fn=print,
                     mqtt_publisher=None,
                     device_id="pi",
                     component="DHT3",
@@ -18,7 +18,7 @@ def run_kitchen_dht(pin, stop_event, print_fn=print,
         return
 
     dht = DHT.DHT(pin)
-    print_fn("Kitchen DHT (REAL) started")
+    print_fn(f"{component} (REAL) started")
 
     while not stop_event.is_set():
         chk = dht.readDHT11()
@@ -28,12 +28,12 @@ def run_kitchen_dht(pin, stop_event, print_fn=print,
             temp = dht.temperature
             hum = dht.humidity
 
-            print_fn(f"DHT TEMP={temp:.1f}°C HUM={hum:.1f}%")
+            print_fn(f"{component} TEMP={temp:.1f}°C HUM={hum:.1f}%")
 
             if mqtt_publisher and mqtt_publisher.connected:
                 payload = {
                     "device_id": device_id,
-                    "sensor_type": "kitchen_dht",
+                    "sensor_type": "dht",
                     "component": component,
                     "temperature": temp,
                     "humidity": hum,
@@ -43,9 +43,9 @@ def run_kitchen_dht(pin, stop_event, print_fn=print,
                 topic = f"smarthome/{device_id}/sensors/{component.lower()}"
                 mqtt_publisher.publish(topic, payload, use_batch=True)
         else:
-            print_fn("DHT read error")
+            print_fn(f"{component} read error")
 
         time.sleep(interval)
 
     GPIO.cleanup(pin)
-    print_fn("Kitchen DHT stopped")
+    print_fn(f"{component} stopped")
