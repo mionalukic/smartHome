@@ -105,5 +105,29 @@
             "threshold": 20000
         }
         
+    },
+
+    "PI3": {
+        "device": {
+            "device_id": "pi3_bedroom_001",
+            "location": "Bedroom"
+        },
+        "DPIR3": {
+            "simulated": true,
+            "component": "DPIR3",
+            "pin": 6
+        },
+        "DHT1": {
+            "simulated": true,
+            "component": "DHT1",
+            "pin": 17,
+            "interval": 2
+        },
+        "DHT2": {
+            "simulated": true,
+            "component": "DHT2",
+            "pin": 18,
+            "interval": 2
+        }
     }
 }

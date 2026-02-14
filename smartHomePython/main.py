@@ -53,8 +53,9 @@ COMPONENT_COLORS = {
     "4SD":    "\033[38;5;203m",
     "DHT3":   "\033[38;5;44m",  # tirkiz
     "GSG":    "\033[38;5;199m",  # ljubičasta / alarm
-
-
+    "DPIR3":  "\033[38;5;160m",   # red
+    "DHT1":   "\033[38;5;129m",   # orchid / magenta
+    "DHT2":   "\033[38;5;190m",   # chartreuse (žuto-zelena)
 }
 RESET = "\033[0m"
 
@@ -328,7 +329,6 @@ def main(args):
         if "--sensors" in args:
             for name, cfg in pi_settings.items():
                 cfg = effective_cfg(name, cfg)
-                
 
                 if name.startswith("DPIR"):
                     safe_print(f"{name} {cfg}", component=name if name in COMPONENT_COLORS else "SYSTEM")
@@ -347,8 +347,13 @@ def main(args):
                     run_dus(cfg, threads, stop_event,
                             print_fn=lambda m, n=name: safe_print(m, component=n),
                             mqtt_publisher=mqtt_publisher,device_id=device_id)
-
-
+                    
+                elif name.startswith("DHT"):
+                    safe_print(f"{name} {cfg}", component=name if name in COMPONENT_COLORS else "SYSTEM")
+                    run_kitchen_dht(cfg, threads, stop_event,
+                                    print_fn=lambda m, n=name: safe_print(m, component=n),
+                                    mqtt_publisher=mqtt_publisher,device_id=device_id)
+                    
                 elif name == "DS1":
                     safe_print(f"{name} {cfg}", component="DS1")
                     run_ds1(cfg, threads, stop_event,  
@@ -366,25 +371,17 @@ def main(args):
                     run_kitchen_button(cfg, threads, stop_event,
                                     print_fn=lambda m: safe_print(m, component="BTN"),
                                     mqtt_publisher=mqtt_publisher, device_id=device_id)
+                    
                 elif name == "4SD":
                     safe_print(f"{name} {cfg}", component="4SD")
                     run_kitchen_4sd(cfg, threads, stop_event,
                                     print_fn=lambda m: safe_print(m, component="4SD"), device_id=device_id)
-                    
-                elif name == "DHT3":
-                    safe_print(f"{name} {cfg}", component="DHT3")
-                    run_kitchen_dht(cfg, threads, stop_event,
-                                    print_fn=lambda m: safe_print(m, component="DHT3"),
-                                    mqtt_publisher=mqtt_publisher,device_id=device_id)
                     
                 elif name == "GSG":
                     safe_print(f"{name} {cfg}", component="GSG")
                     run_kitchen_gsg(cfg, threads, stop_event,
                                     print_fn=lambda m: safe_print(m, component="GSG"),
                                     mqtt_publisher=mqtt_publisher,device_id=device_id)
-
-
-
 
         safe_print("=" * 60, component="SYSTEM")
         safe_print("System running. Press Ctrl+C to stop.", component="SYSTEM")
