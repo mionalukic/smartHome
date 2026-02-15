@@ -12,6 +12,7 @@ def start_actuator_listener(device_id, pi_settings, threads, stop_event,
         client.subscribe(topic)
 
     def on_message(client, userdata, msg):
+        safe_print(f"Received MQTT message on topic {msg.topic}", component="MQTT")
         try:
             payload = json.loads(msg.payload.decode())
             topic = msg.topic
@@ -35,16 +36,6 @@ def start_actuator_listener(device_id, pi_settings, threads, stop_event,
                     threads,
                     stop_event,
                     print_fn=lambda m: safe_print(m, component="DL"),
-                    state=state
-                )
-            elif "lcd" in topic:   
-                state = payload.get("command") == "on"
-                run_lcd(
-                    pi_settings.get("LCD", {}),
-                    threads,
-                    stop_event,
-                    print_fn=lambda m: safe_print(m, component="LCD"),
-                    mqtt_publisher=client,
                     state=state
                 )
 

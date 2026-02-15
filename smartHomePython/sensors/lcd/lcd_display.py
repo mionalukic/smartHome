@@ -15,7 +15,7 @@ class LCD:
         self.mcp = None
         self.lcd = None
 
-    def setup(self, print_fn=print, mqtt_publisher=None, device_id="pi1"):
+    def setup(self, print_fn=print, mqtt_publisher=None, device_id="pi3_bedroom_001"):
         self.print_fn = print_fn
         self.mqtt_publisher = mqtt_publisher
         self.device_id = device_id

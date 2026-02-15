@@ -2,7 +2,6 @@ import logging
 import threading
 import time
 import sys
-import json
 
 from settings import load_settings
 from components.door_buzzer import run_db
@@ -61,37 +60,12 @@ COMPONENT_COLORS = {
 }
 RESET = "\033[0m"
 
-def parse_arg(args, key, default=None):
-    if key in args:
-        i = args.index(key)
-        if i + 1 < len(args):
-            return args[i + 1]
-    return default
-
-
-def get_pi_context(settings, args):
-    pi_name = parse_arg(args, "--pi", "PI1")
-
-    pi_settings = settings.get(pi_name, {})
-
-    device = pi_settings.get("device", {})
-
-    return pi_name, device, pi_settings
-
-def get_pi_names(args):
+def get_pi_context(args):
     if "--pi" in args:
         i = args.index("--pi")
-        pi_names = []
-
-        for val in args[i + 1:]:
-            if val.startswith("--"):
-                break
-            pi_names.append(val)
-
-        return pi_names if pi_names else ["PI1"]
-
-    return ["PI1"]
-
+        if i + 1 < len(args):
+            return args[i + 1]
+    return "PI1"
 
 def safe_print(message, *, component="SYSTEM", end="\n"):
     color = COMPONENT_COLORS.get(component, "")
@@ -159,11 +133,10 @@ def format_help():
         "  quit | exit | q            - stop and exit\n"
     )
 
-def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher=None, device_id=None):
+def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher=None, device_id=None, settings=None):
     safe_print("Console ready. Type 'help' for commands.", component="SYSTEM")
 
     db_settings = pi_settings.get("DB", {})
-    # safe_print(db_settings, component="SYSTEM")
 
     while not stop_event.is_set():
         try:
@@ -178,146 +151,151 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
 
         parts = cmd.split()
         op = parts[0].lower()
+        try:
+            if op in ("quit", "exit", "q"):
+                stop_event.set()
+                safe_print("Stopping application...", component="SYSTEM")
+                break
 
-        if op in ("quit", "exit", "q"):
-            stop_event.set()
-            safe_print("Stopping application...", component="SYSTEM")
-            break
+            elif op == "help":
+                safe_print(format_help(), component="SYSTEM")
 
-        elif op == "help":
-            safe_print(format_help(), component="SYSTEM")
+            elif op == "status":
+                names = sorted(actuator_registry)
+                label = ", ".join(names) if names else "(none)"
+                safe_print(f"Components: {label}", component="SYSTEM")
 
-        elif op == "status":
-            names = sorted(actuator_registry)
-            label = ", ".join(names) if names else "(none)"
-            safe_print(f"Components: {label}", component="SYSTEM")
-
-        elif op == "mqtt":
-            sub = parts[1].lower() if len(parts) > 1 else ""
-            if sub == "status":
-                if mqtt_publisher:
-                    status = "Connected" if mqtt_publisher.connected else "Disconnected"
-                    safe_print(f"MQTT Status: {status}", component="MQTT")
-                    if mqtt_publisher.connected:
-                        safe_print(f"Broker: {mqtt_publisher.broker}:{mqtt_publisher.port}", component="MQTT")
-                        safe_print(f"Batch size: {mqtt_publisher.batch_size}", component="MQTT")
-                        safe_print(f"Batch interval: {mqtt_publisher.batch_interval}s", component="MQTT")
+            elif op == "mqtt":
+                sub = parts[1].lower() if len(parts) > 1 else ""
+                if sub == "status":
+                    if mqtt_publisher:
+                        status = "Connected" if mqtt_publisher.connected else "Disconnected"
+                        safe_print(f"MQTT Status: {status}", component="MQTT")
+                        if mqtt_publisher.connected:
+                            safe_print(f"Broker: {mqtt_publisher.broker}:{mqtt_publisher.port}", component="MQTT")
+                            safe_print(f"Batch size: {mqtt_publisher.batch_size}", component="MQTT")
+                            safe_print(f"Batch interval: {mqtt_publisher.batch_interval}s", component="MQTT")
+                    else:
+                        safe_print("MQTT not configured", component="SYSTEM")
                 else:
-                    safe_print("MQTT not configured", component="SYSTEM")
-            else:
-                safe_print("Usage: mqtt status", component="SYSTEM")
+                    safe_print("Usage: mqtt status", component="SYSTEM")
 
-#TODO: add brgb and lcd
-        elif op == "all":
-            if pi_settings.get("device").get("device_id") == "pi1_door_001":
-                if "DB" not in actuator_registry:
-                    run_db(pi_settings.get("DB"), threads, stop_event,
-                            print_fn=lambda m: safe_print(m, component="DB"),
+    #TODO: add brgb and lcd
+            elif op == "all":
+                if pi_settings.get("device").get("device_id") == "pi1_door_001":
+                    if "DB" not in actuator_registry:
+                        run_db(pi_settings.get("DB"), threads, stop_event,
+                                print_fn=lambda m: safe_print(m, component="DB"),
+                                mqtt_publisher=mqtt_publisher, state='on'
+                            )
+                        actuator_registry.add("DB")
+                    if "DL" not in actuator_registry:
+                        run_dl(pi_settings.get("DL", {}), threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="DL"),
                             mqtt_publisher=mqtt_publisher, state='on'
                         )
-                    actuator_registry.add("DB")
-                if "DL" not in actuator_registry:
-                    run_dl(pi_settings.get("DL", {}), threads, stop_event,
+                        actuator_registry.add("DL")
+                if pi_settings.get("device").get("device_id") == "pi3_bedroom_001":
+                    if "LCD" not in actuator_registry:
+                        run_lcd(pi_settings.get("LCD", {}), threads, stop_event,
+                                print_fn=lambda m: safe_print(m, component="LCD"),
+                                mqtt_publisher=mqtt_publisher,
+                                state=True)
+                        actuator_registry.add("LCD")
+
+            elif op == "buzz":
+                sub = parts[1].lower() if len(parts) > 1 else ""
+                safe_print(f"Buzz command: {sub}", component="SYSTEM")
+                if sub == "on":
+                    if "DB" in actuator_registry:
+                        safe_print("DB is already turned on", component="SYSTEM")
+                    else:
+                        run_db(db_settings, threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="DB"),
+                            mqtt_publisher=mqtt_publisher, state=True
+                        )
+                        actuator_registry.add("DB")
+
+                elif sub == "off":
+                    if "DB" in actuator_registry:
+                        safe_print("DB turned off", component="DB")
+                        actuator_registry.discard("DB")
+                    else:
+                        safe_print("DB is already turned off", component="SYSTEM")
+
+                else:
+                    safe_print("Usage: buzz on | buzz off", component="SYSTEM")
+
+
+            elif op == "led":
+                sub = parts[1].lower() if len(parts) > 1 else ""
+                dl_settings = pi_settings.get("DL", {})
+
+                if sub == "on":
+                    run_dl(dl_settings, threads, stop_event,
                         print_fn=lambda m: safe_print(m, component="DL"),
-                        mqtt_publisher=mqtt_publisher, state='on'
+                        mqtt_publisher=mqtt_publisher,
+                        state=True
                     )
-                    actuator_registry.add("DL")
-            if pi_settings.get("device").get("device_id") == "pi3_bedroom_001":
-                if "LCD" not in actuator_registry:
-                    run_lcd(pi_settings.get("LCD", {}), threads, stop_event,
+
+                elif sub == "off":
+                    run_dl(dl_settings, threads, stop_event,
+                        print_fn=lambda m: safe_print(m, component="DL"),
+                        mqtt_publisher=mqtt_publisher,
+                        state=False
+                    )
+
+                else:
+                    safe_print("Usage: led on | led off", component="SYSTEM")
+
+            elif op == "door":
+                sub = parts[1].lower() if len(parts) > 1 else ""
+
+                if sub == "open":
+                    simulate_door(mqtt_publisher, device_id, "open")
+
+                elif sub == "close":
+                    simulate_door(mqtt_publisher, device_id, "closed")
+
+                else:
+                    safe_print("Usage: door open | door close", component="SYSTEM")
+
+
+            elif op == "pin":
+                if len(parts) > 1:
+                    simulate_pin(mqtt_publisher, device_id, parts[1])
+                else:
+                    safe_print("Usage: pin <code>", component="SYSTEM")
+            elif op == "lcd":
+                sub = parts[1].lower() if len(parts) > 1 else ""
+                lcd_settings = settings.get("PI3").get("LCD", {})
+                if not lcd_settings:
+                    safe_print(f"LCD not configured for {pi_settings.get('device_id', 'unknown')}", component="SYSTEM")
+                    continue
+                safe_print(f"lcd settings: {lcd_settings}", component="LCD")
+                if sub == "on":
+                    run_lcd(lcd_settings, threads, stop_event,
                             print_fn=lambda m: safe_print(m, component="LCD"),
                             mqtt_publisher=mqtt_publisher,
                             state=True)
+
                     actuator_registry.add("LCD")
 
-        elif op == "buzz":
-            sub = parts[1].lower() if len(parts) > 1 else ""
-            safe_print(f"Buzz command: {sub}", component="SYSTEM")
-            if sub == "on":
-                if "DB" in actuator_registry:
-                    safe_print("DB is already turned on", component="SYSTEM")
+                elif sub == "off":
+                    run_lcd(lcd_settings, threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="LCD"),
+                            mqtt_publisher=mqtt_publisher,
+                            state=False)
+
+                    actuator_registry.discard("LCD")
+
                 else:
-                    safe_print("ovde sam")
-                    run_db(db_settings, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DB"),
-                        mqtt_publisher=mqtt_publisher, state=True
-                    )
-                    actuator_registry.add("DB")
-
-            elif sub == "off":
-                if "DB" in actuator_registry:
-                    safe_print("DB turned off", component="DB")
-                    actuator_registry.discard("DB")
-                else:
-                    safe_print("DB is already turned off", component="SYSTEM")
-
+                    safe_print("Usage: lcd on | lcd off", component="SYSTEM")
             else:
-                safe_print("Usage: buzz on | buzz off", component="SYSTEM")
+                safe_print(f"Unknown command: {cmd}", component="SYSTEM")
 
-
-        elif op == "led":
-            sub = parts[1].lower() if len(parts) > 1 else ""
-            dl_settings = pi_settings.get("DL", {})
-
-            if sub == "on":
-                run_dl(dl_settings, threads, stop_event,
-                    print_fn=lambda m: safe_print(m, component="DL"),
-                    mqtt_publisher=mqtt_publisher,
-                    state=True
-                )
-
-            elif sub == "off":
-                run_dl(dl_settings, threads, stop_event,
-                    print_fn=lambda m: safe_print(m, component="DL"),
-                    mqtt_publisher=mqtt_publisher,
-                    state=False
-                )
-
-            else:
-                safe_print("Usage: led on | led off", component="SYSTEM")
-
-        elif op == "door":
-            sub = parts[1].lower() if len(parts) > 1 else ""
-
-            if sub == "open":
-                simulate_door(mqtt_publisher, device_id, "open")
-
-            elif sub == "close":
-                simulate_door(mqtt_publisher, device_id, "closed")
-
-            else:
-                safe_print("Usage: door open | door close", component="SYSTEM")
-
-
-        elif op == "pin":
-            if len(parts) > 1:
-                simulate_pin(mqtt_publisher, device_id, parts[1])
-            else:
-                safe_print("Usage: pin <code>", component="SYSTEM")
-        elif op == "lcd":
-            sub = parts[1].lower() if len(parts) > 1 else ""
-            lcd_settings = pi_settings.get("LCD", {})
-
-            if sub == "on":
-                run_lcd(lcd_settings, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="LCD"),
-                        mqtt_publisher=mqtt_publisher,
-                        state=True)
-
-                actuator_registry.add("LCD")
-
-            elif sub == "off":
-                run_lcd(lcd_settings, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="LCD"),
-                        mqtt_publisher=mqtt_publisher,
-                        state=False)
-
-                actuator_registry.discard("LCD")
-
-            else:
-                safe_print("Usage: lcd on | lcd off", component="SYSTEM")
-        else:
-            safe_print(f"Unknown command: {cmd}", component="SYSTEM")
+        except Exception as e:
+            safe_print(f"Error processing command '{cmd}': {e}", component="SYSTEM")
 
 def setup_mqtt(settings, device_id):
     mqtt_config = MQTTConfig()
@@ -350,10 +328,9 @@ def setup_mqtt(settings, device_id):
     
     return None
     
-
 def create_mqtt_client(device_id, broker="localhost", port=1883):
     safe_print("Creating MQTT client for DHT subscription...", component="MQTT")
-    client_id = f"smarthome_{device_id}"
+    client_id = f"smarthome_{device_id}_lcd"
     client = mqtt.Client(client_id=client_id)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
@@ -366,7 +343,7 @@ def create_mqtt_client(device_id, broker="localhost", port=1883):
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
-        safe_print("Connected to MQTT Broker", component="MQTT")
+        safe_print("Connected to MQTT Broker for LCD", component="MQTT")
 
         client.subscribe("smarthome/pi3_bedroom_001/sensors/dht1")
         client.subscribe("smarthome/pi3_bedroom_001/sensors/dht2")
@@ -391,10 +368,7 @@ def run_pi_instance(pi_name, settings, args):
     safe_print("=" * 60, component="SYSTEM")
     
     actuator_registry = set()
-
     device_id = device.get("device_id")
-    location = device.get("location")
-
 
     try:
         mqtt_publisher = setup_mqtt(settings, device_id)
@@ -471,10 +445,13 @@ def run_pi_instance(pi_name, settings, args):
         safe_print("System running. Press Ctrl+C to stop.", component="SYSTEM")
         safe_print("=" * 60, component="SYSTEM")
 
-        command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher,device_id)
+        command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher,device_id, settings)
 
     except KeyboardInterrupt:
         safe_print("Stopping app (KeyboardInterrupt)", component="SYSTEM")
+        stop_event.set()
+    except Exception as e:
+        safe_print(f"Error in main loop: {e}", component="SYSTEM")
         stop_event.set()
     finally:
         if mqtt_publisher:
@@ -497,28 +474,30 @@ def run_pi_instance(pi_name, settings, args):
 
 def main(args):
     settings = load_settings()
-    pi_names = get_pi_names(args)
+    pi_name = get_pi_context(args)
 
     threads = []
 
     safe_print("=" * 60, component="SYSTEM")
-    safe_print(f"Starting Smart Home System for: {', '.join(pi_names)}", component="SYSTEM")
+    safe_print(f"Starting Smart Home System for: {pi_name}", component="SYSTEM")
     safe_print("=" * 60, component="SYSTEM")
 
-    for pi_name in pi_names:
-        t = threading.Thread(
-            target=run_pi_instance,
-            args=(pi_name, settings, args),
-            daemon=True
-        )
-        t.start()
-        threads.append(t)
+    # for pi_name in pi_names:
+    t = threading.Thread(
+        target=run_pi_instance,
+        args=(pi_name, settings, args),
+        daemon=True
+    )
+    t.start()
+    threads.append(t)
 
     try:
         for t in threads:
             t.join()
     except KeyboardInterrupt:
         safe_print("Stopping all instances...", component="SYSTEM")
+    except Exception as e:
+        safe_print(f"Error in main thread: {e}", component="SYSTEM")
 
 
 if __name__ == "__main__":
