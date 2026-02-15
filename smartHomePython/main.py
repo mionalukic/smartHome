@@ -21,7 +21,7 @@ from components.kitchen_gsg import run_kitchen_gsg
 from mqtt.actuator_listener import start_actuator_listener
 from components.lcd_display import on_dht_message, run_lcd
 import paho.mqtt.client as mqtt
-from mqtt.subscriber import on_disconnect, on_disconnect, on_message, on_connect
+from mqtt.subscriber import on_disconnect
 
 try:
     import RPi.GPIO as GPIO
@@ -78,6 +78,19 @@ def get_pi_context(settings, args):
 
     return pi_name, device, pi_settings
 
+def get_pi_names(args):
+    if "--pi" in args:
+        i = args.index("--pi")
+        pi_names = []
+
+        for val in args[i + 1:]:
+            if val.startswith("--"):
+                break
+            pi_names.append(val)
+
+        return pi_names if pi_names else ["PI1"]
+
+    return ["PI1"]
 
 
 def safe_print(message, *, component="SYSTEM", end="\n"):
@@ -211,7 +224,7 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                     actuator_registry.add("DL")
             if pi_settings.get("device").get("device_id") == "pi3_bedroom_001":
                 if "LCD" not in actuator_registry:
-                    run_lcd(pi_settings.get("LCD1", {}), threads, stop_event,
+                    run_lcd(pi_settings.get("LCD", {}), threads, stop_event,
                             print_fn=lambda m: safe_print(m, component="LCD"),
                             mqtt_publisher=mqtt_publisher,
                             state=True)
@@ -306,7 +319,7 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
         else:
             safe_print(f"Unknown command: {cmd}", component="SYSTEM")
 
-def setup_mqtt(settings):
+def setup_mqtt(settings, device_id):
     mqtt_config = MQTTConfig()
     
     safe_print("Setting up MQTT...", component="MQTT")
@@ -325,9 +338,10 @@ def setup_mqtt(settings):
     if mqtt_publisher.connect():
         time.sleep(1)  
         if mqtt_publisher.connected:
-            safe_print("MQTT connected", component="MQTT")
+            safe_print(f"MQTT connected - {mqtt_publisher.client}", component="MQTT")
             mqtt_publisher.start_batch_publisher()
-            mqtt_client = create_mqtt_client("localhost", 1883)
+            if device_id == "pi3_bedroom_001":
+                create_mqtt_client(device_id, "localhost", 1883)
             return mqtt_publisher
         else:
             safe_print("MQTT connection failed", component="MQTT")
@@ -337,21 +351,37 @@ def setup_mqtt(settings):
     return None
     
 
-def create_mqtt_client(broker="localhost", port=1883):
-    client = mqtt.Client(client_id="smarthome_main")
-
+def create_mqtt_client(device_id, broker="localhost", port=1883):
+    safe_print("Creating MQTT client for DHT subscription...", component="MQTT")
+    client_id = f"smarthome_{device_id}"
+    client = mqtt.Client(client_id=client_id)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
+    client.on_message = on_dht_message
+
     client.connect(broker, port, 60)
     client.loop_start()
 
     return client
 
-def main(args):
-    
+def on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        safe_print("Connected to MQTT Broker", component="MQTT")
 
-    settings = load_settings()
-    pi_name, device, pi_settings = get_pi_context(settings, args)
+        client.subscribe("smarthome/pi3_bedroom_001/sensors/dht1")
+        client.subscribe("smarthome/pi3_bedroom_001/sensors/dht2")
+        client.subscribe("smarthome/pi2_kitchen_001/sensors/dht3")
+
+    else:
+        safe_print(f"Failed to connect, return code {rc}", component="MQTT")
+
+
+def run_pi_instance(pi_name, settings, args): 
+
+    pi_settings = settings.get(pi_name, {})
+    device = pi_settings.get("device", {})
+    safe_print(f"Starting instance for {pi_name} with device ID {device.get('device_id')}", component="SYSTEM")
+    safe_print(f"Device config: {device}", component="SYSTEM")
     threads = []
     stop_event = threading.Event()
     mqtt_publisher = None
@@ -367,7 +397,7 @@ def main(args):
 
 
     try:
-        mqtt_publisher = setup_mqtt(settings)
+        mqtt_publisher = setup_mqtt(settings, device_id)
         start_actuator_listener(
             device_id,
             pi_settings,
@@ -464,6 +494,32 @@ def main(args):
                 pass
 
         safe_print("App stopped cleanly", component="SYSTEM")
+
+def main(args):
+    settings = load_settings()
+    pi_names = get_pi_names(args)
+
+    threads = []
+
+    safe_print("=" * 60, component="SYSTEM")
+    safe_print(f"Starting Smart Home System for: {', '.join(pi_names)}", component="SYSTEM")
+    safe_print("=" * 60, component="SYSTEM")
+
+    for pi_name in pi_names:
+        t = threading.Thread(
+            target=run_pi_instance,
+            args=(pi_name, settings, args),
+            daemon=True
+        )
+        t.start()
+        threads.append(t)
+
+    try:
+        for t in threads:
+            t.join()
+    except KeyboardInterrupt:
+        safe_print("Stopping all instances...", component="SYSTEM")
+
 
 if __name__ == "__main__":
     args = sys.argv[1:]

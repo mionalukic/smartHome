@@ -129,7 +129,7 @@
             "pin": 18,
             "interval": 2
         },
-        "LCD1": {
+        "LCD": {
             "component": "LCD",
             "simulated": true,
             "i2c_address": "0x27",

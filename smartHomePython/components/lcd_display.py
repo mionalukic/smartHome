@@ -9,7 +9,7 @@ def on_dht_message(payload):
     temp = payload.get("temperature", "--")
     hum = payload.get("humidity", "--")
     dht_data[component] = (temp, hum)
-    # print(f"Received DHT data: {component} temp={temp}C hum={hum}%")
+    print(f"Received DHT data: {component} temp={temp}C hum={hum}%")
 
 
 def run_lcd(settings, threads, stop_event,
