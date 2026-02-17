@@ -1,7 +1,6 @@
+from queue import Empty
 import RPi.GPIO as GPIO
 from time import sleep, time
-
-
 
 class RGBLED(object):
     def __init__(self, red_pin, green_pin, blue_pin):
@@ -18,7 +17,6 @@ class RGBLED(object):
             return
         GPIO.setmode(GPIO.BCM)
 
-        #set pins as outputs
         GPIO.setup(self.red_pin, GPIO.OUT)
         GPIO.setup(self.green_pin, GPIO.OUT)
         GPIO.setup(self.blue_pin, GPIO.OUT)
@@ -92,37 +90,38 @@ class RGBLED(object):
             self.mqtt_publisher.publish(topic, payload, use_batch=True)
 
 
-def run_rgb_led_loop(rgb, stop_event, command_state, print_fn=print, mqtt_publisher=None, device_id='pi'):
+def run_rgb_led_loop(rgb, stop_event, color_queue,
+                     print_fn=print, mqtt_publisher=None, device_id='pi'):
+
     last_command = None
+
     try:
         rgb.setUp(print_fn, mqtt_publisher, device_id)
 
         while not stop_event.is_set():
-            current_command = command_state["value"]
+            try:
+                current_command = color_queue.get(timeout=0.1)
+                if current_command != last_command:
+                    if current_command == "red":
+                        rgb.red()
+                    elif current_command == "green":
+                        rgb.green()
+                    elif current_command == "blue":
+                        rgb.blue()
+                    elif current_command == "white":
+                        rgb.white()
+                    elif current_command == "yellow":
+                        rgb.yellow()
+                    elif current_command == "purple":
+                        rgb.purple()
+                    elif current_command == "light_blue":
+                        rgb.lightBlue()
+                    else:
+                        rgb.turnOff()
 
-            if current_command != last_command:
-                if current_command == "white":
-                    rgb.white()
-                elif current_command == "red":
-                    rgb.red()
-                elif current_command == "green":
-                    rgb.green()
-                elif current_command == "blue":
-                    rgb.blue()
-                elif current_command == "yellow":
-                    rgb.yellow()
-                elif current_command == "purple":
-                    rgb.purple()
-                elif current_command == "light_blue":
-                    rgb.lightBlue()
-                else:
-                    rgb.turnOff()
+                    last_command = current_command
+            except Empty:
+                continue
 
-                last_command = current_command
-
-            sleep(0.1)  
-
-    except Exception as e:
-        print_fn(f"Error in RGB LED loop: {e}")
     finally:
         GPIO.cleanup()

@@ -1,3 +1,4 @@
+from queue import Empty
 from time import sleep, time
 
 def publish(mqtt_publisher, device_id, color, value):
@@ -7,7 +8,6 @@ def publish(mqtt_publisher, device_id, color, value):
             "actuator_type": "rgb_led",
             "simulated": True,
             "light_color": color,
-            "value": value,
             "timestamp": time()
         }
 
@@ -15,23 +15,15 @@ def publish(mqtt_publisher, device_id, color, value):
         mqtt_publisher.publish(topic, payload, use_batch=True)
 
 
-def run_rgb_led_simulator(color_state, print_fn=print, mqtt_publisher=None, device_id='pi'):
-    command = color_state["value"]
-    if command == "white":
-        publish(mqtt_publisher, device_id, "white", 1)
-    elif command == "red":
-        publish(mqtt_publisher, device_id, "red", 2)
-    elif command == "green":
-        publish(mqtt_publisher, device_id, "green", 3)
-    elif command == "blue":
-        publish(mqtt_publisher, device_id, "blue", 4)
-    elif command == "yellow":
-        publish(mqtt_publisher, device_id, "yellow", 5)
-    elif command == "purple":
-        publish(mqtt_publisher, device_id, "purple", 6)
-    elif command == "light_blue":
-        publish(mqtt_publisher, device_id, "light_blue", 7)
-    else:
-        publish(mqtt_publisher, device_id, "off", 0)
-    print_fn(f"RGB LED set to {command}")
+def run_rgb_led_simulator(color_queue, print_fn=print, mqtt_publisher=None, device_id='pi'):
+    last_color = None
 
+    while True:
+        try:
+            current_color = color_queue.get(timeout=0.1)
+            if current_color != last_color:
+                print_fn(f"[RGB_SIM] LED color is now {current_color}")
+                last_color = current_color
+                publish(mqtt_publisher, device_id, current_color, 1)
+        except Empty:
+            continue

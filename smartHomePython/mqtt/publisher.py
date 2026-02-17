@@ -145,6 +145,6 @@ class MQTTPublisher:
                         if self._publish_now(topic, data):
                             success += 1
                     
-                    logger.info(f"Published {success}/{len(batch)} to {topic}")
+                    # logger.info(f"Published {success}/{len(batch)} to {topic}")
             
             time.sleep(self.batch_interval)

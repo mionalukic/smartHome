@@ -6,7 +6,7 @@ from simulators.lcd_display import run_lcd_simulator
 dht_data = {}
 
 def on_dht_message(client, userdata, msg):
-    print(f"[MQTT] Received message on topic {msg.topic}")
+    # print(f"[MQTT] Received message on topic {msg.topic}")
     try:
 
         payload = json.loads(msg.payload.decode('utf-8'))
