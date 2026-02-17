@@ -131,7 +131,6 @@ def effective_cfg(name, cfg):
         cfg["simulated"] = True
     return cfg
 
-#TODO: brgb and lcd - actuators
 def format_help():
     return (
         "Commands:\n"
@@ -201,7 +200,6 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                 else:
                     safe_print("Usage: mqtt status", component="SYSTEM")
 
-    #TODO: add brgb and lcd
             elif op == "all":
                 if pi_settings.get("device").get("device_id") == "pi1_door_001":
                     if "DB" not in actuator_registry:
