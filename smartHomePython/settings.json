@@ -144,6 +144,11 @@
             "red_pin": 12,
             "green_pin": 13,
             "blue_pin": 19
+        },
+        "IR": {
+            "simulated": true,
+            "component": "IR",
+            "pin": 17
         }
     }
 }
