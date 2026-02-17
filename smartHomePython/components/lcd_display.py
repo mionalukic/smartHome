@@ -3,7 +3,6 @@ import threading
 import json
 from simulators.lcd_display import run_lcd_simulator
 
-# Globalni dictionary za čuvanje DHT podataka
 dht_data = {}
 
 def on_dht_message(client, userdata, msg):
@@ -11,7 +10,6 @@ def on_dht_message(client, userdata, msg):
     try:
 
         payload = json.loads(msg.payload.decode('utf-8'))
-        # print(f"[MQTT] Received DHT message: {payload}")
         component = payload.get("component", "UNKNOWN")
         temp = payload.get("temperature", "--")
         hum = payload.get("humidity", "--")

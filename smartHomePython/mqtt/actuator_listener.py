@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 
 
 def start_actuator_listener(device_id, pi_settings, threads, stop_event,
-                            run_db, run_dl, run_lcd, safe_print):
+                            run_db, run_dl, safe_print):
 
     def on_connect(client, userdata, flags, rc):
         topic = f"smarthome/{device_id}/actuators/#"
