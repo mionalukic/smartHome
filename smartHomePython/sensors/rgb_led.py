@@ -92,29 +92,37 @@ class RGBLED(object):
             self.mqtt_publisher.publish(topic, payload, use_batch=True)
 
 
-def run_rgb_led_loop(rgb, stop_event, command, print_fn=print, mqtt_publisher=None, device_id='pi'):
+def run_rgb_led_loop(rgb, stop_event, command_state, print_fn=print, mqtt_publisher=None, device_id='pi'):
+    last_command = None
     try:
         rgb.setUp(print_fn, mqtt_publisher, device_id)
-        while not stop_event.is_set():
-            if command == "white":
-                rgb.white()
-            elif command == "red":
-                rgb.red()
-            elif command == "green":
-                rgb.green()
-            elif command == "blue":
-                rgb.blue()
-            elif command == "yellow":
-                rgb.yellow()
-            elif command == "purple":
-                rgb.purple()
-            elif command == "light_blue":
-                rgb.lightBlue()
-            else:
-                rgb.turnOff()
 
-            sleep(1)
+        while not stop_event.is_set():
+            current_command = command_state["value"]
+
+            if current_command != last_command:
+                if current_command == "white":
+                    rgb.white()
+                elif current_command == "red":
+                    rgb.red()
+                elif current_command == "green":
+                    rgb.green()
+                elif current_command == "blue":
+                    rgb.blue()
+                elif current_command == "yellow":
+                    rgb.yellow()
+                elif current_command == "purple":
+                    rgb.purple()
+                elif current_command == "light_blue":
+                    rgb.lightBlue()
+                else:
+                    rgb.turnOff()
+
+                last_command = current_command
+
+            sleep(0.1)  
+
     except Exception as e:
-        print_fn(f"Error in RGB LED loop: {e}") 
+        print_fn(f"Error in RGB LED loop: {e}")
     finally:
         GPIO.cleanup()

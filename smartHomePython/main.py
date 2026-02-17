@@ -21,6 +21,7 @@ from mqtt.actuator_listener import start_actuator_listener
 from components.lcd_display import on_dht_message, run_lcd
 import paho.mqtt.client as mqtt
 from mqtt.subscriber import on_disconnect
+from components.rgb_led import run_rgb
 
 try:
     import RPi.GPIO as GPIO
@@ -57,6 +58,7 @@ COMPONENT_COLORS = {
     "DHT1":   "\033[38;5;129m",   # orchid / magenta
     "DHT2":   "\033[38;5;190m",   # chartreuse (žuto-zelena)
     "LCD":    "\033[38;5;51m",   # bright cyan
+    "RGB_LED": "\033[38;5;180m",  
 }
 RESET = "\033[0m"
 
@@ -84,6 +86,19 @@ def simulate_door(mqtt_publisher, device_id, state):
     topic = f"smarthome/{device_id}/sensors/door"
     mqtt_publisher.publish(topic, payload)
     safe_print(f"Door simulated: {state}", component="DS1")
+
+def simulate_rgb_color_change(mqtt_publisher, color, device_id="pi3_bedroom_001"):
+    payload = {
+        "device_id": device_id,
+        "actuator_type": "rgb_led",
+        "component": "RGB_LED",
+        "command": color,
+        "simulated": True,
+        "timestamp": time.time()
+    }
+    topic = f"smarthome/{device_id}/actuators/rgb_led"
+    mqtt_publisher.publish(topic, payload)
+    safe_print(f"RGB LED command simulated: {color}", component="RGB_LED")
 
 
 def simulate_pin(mqtt_publisher, device_id, pin):
@@ -130,6 +145,9 @@ def format_help():
         "  pin <code>                 - send PIN sequence\n"
         "  lcd on                     - turn LCD on\n"
         "  lcd off                    - turn LCD off\n"
+        "  rgb on <color>             - turn RGB LED on with specified color\n"
+        "  rgb <color>                - change RGB LED color\n"
+        "  rgb off                    - turn RGB LED off\n"
         "  quit | exit | q            - stop and exit\n"
     )
 
@@ -202,6 +220,12 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                                 mqtt_publisher=mqtt_publisher,
                                 state=True)
                         actuator_registry.add("LCD")
+                if "RGB_LED" not in actuator_registry:
+                    run_rgb(pi_settings.get("RGB_LED", {}), threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="RGB_LED"),
+                            mqtt_publisher=mqtt_publisher, device_id=device_id)
+                    actuator_registry.add("RGB_LED")
+                    safe_print(f"All actuators turned on for device {device_id}, {pi_settings.get('RGB_LED')}", component="SYSTEM")
 
             elif op == "buzz":
                 sub = parts[1].lower() if len(parts) > 1 else ""
@@ -288,9 +312,30 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                             state=False)
 
                     actuator_registry.discard("LCD")
-
+          
                 else:
                     safe_print("Usage: lcd on | lcd off", component="SYSTEM")
+            elif op == "rgb":
+                sub = parts[1].lower() if len(parts) > 1 else ""
+                rgb_settings = settings.get("PI3").get("RGB_LED", {})
+                if not rgb_settings:
+                    safe_print(f"RGB LED not configured for {pi_settings.get('device_id', 'unknown')}", component="SYSTEM")
+                    continue
+                safe_print(f"RGB LED settings: {rgb_settings}", component="RGB_LED")
+                if sub == "on":
+                    run_rgb(rgb_settings, threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="RGB_LED"),
+                            mqtt_publisher=mqtt_publisher, device_id=device_id)
+
+                    actuator_registry.add("RGB_LED")
+                elif sub == "off":
+                    run_rgb(rgb_settings, threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="RGB_LED"),
+                            mqtt_publisher=mqtt_publisher, device_id=device_id)
+
+                    actuator_registry.discard("RGB_LED")
+                elif sub in ("white", "red", "green", "blue", "yellow", "purple", "light_blue"):
+                    simulate_rgb_color_change(mqtt_publisher, sub, device_id)
             else:
                 safe_print(f"Unknown command: {cmd}", component="SYSTEM")
 
@@ -379,7 +424,6 @@ def run_pi_instance(pi_name, settings, args):
             stop_event,
             run_db,
             run_dl,
-            run_lcd,
             safe_print
         )
         
