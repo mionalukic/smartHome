@@ -1,3 +1,4 @@
+from functools import partial
 import logging
 import threading
 import time
@@ -21,7 +22,8 @@ from mqtt.actuator_listener import start_actuator_listener
 from components.lcd_display import on_dht_message, run_lcd
 import paho.mqtt.client as mqtt
 from mqtt.subscriber import on_disconnect
-from components.rgb_led import run_rgb
+from components.rgb_led import on_command_message, run_rgb
+from components.ir import run_ir
 
 try:
     import RPi.GPIO as GPIO
@@ -58,7 +60,8 @@ COMPONENT_COLORS = {
     "DHT1":   "\033[38;5;129m",   # orchid / magenta
     "DHT2":   "\033[38;5;190m",   # chartreuse (žuto-zelena)
     "LCD":    "\033[38;5;51m",   # bright cyan
-    "RGB_LED": "\033[38;5;180m",  
+    "RGB_LED":"\033[38;5;180m", 
+    "IR":     "\033[38;5;70m",
 }
 RESET = "\033[0m"
 
@@ -364,7 +367,8 @@ def setup_mqtt(settings, device_id):
             safe_print(f"MQTT connected - {mqtt_publisher.client}", component="MQTT")
             mqtt_publisher.start_batch_publisher()
             if device_id == "pi3_bedroom_001":
-                create_mqtt_client(device_id, "localhost", 1883)
+                create_mqtt_client(device_id, "LCD")
+                create_mqtt_client(device_id, "RGB_LED")
             return mqtt_publisher
         else:
             safe_print("MQTT connection failed", component="MQTT")
@@ -373,26 +377,31 @@ def setup_mqtt(settings, device_id):
     
     return None
     
-def create_mqtt_client(device_id, broker="localhost", port=1883):
-    safe_print("Creating MQTT client for DHT subscription...", component="MQTT")
-    client_id = f"smarthome_{device_id}_lcd"
+def create_mqtt_client(device_id, component, broker="localhost", port=1883):
+    safe_print(f"Creating MQTT client for {component} subscription...", component="MQTT")
+    client_id = f"smarthome_{device_id}_{component}"
     client = mqtt.Client(client_id=client_id)
-    client.on_connect = on_connect
+    client.on_connect = partial(on_connect, component=component)
+    
     client.on_disconnect = on_disconnect
-    client.on_message = on_dht_message
+    client.on_message = on_dht_message if component == "LCD" else on_command_message
 
     client.connect(broker, port, 60)
     client.loop_start()
 
     return client
 
-def on_connect(client, userdata, flags, rc):
+def on_connect(client, userdata, flags, rc, component=None):
     if rc == 0:
-        safe_print("Connected to MQTT Broker for LCD", component="MQTT")
+        if component == "LCD":
+            safe_print("Connected to MQTT Broker for LCD", component="MQTT")
 
-        client.subscribe("smarthome/pi3_bedroom_001/sensors/dht1")
-        client.subscribe("smarthome/pi3_bedroom_001/sensors/dht2")
-        client.subscribe("smarthome/pi2_kitchen_001/sensors/dht3")
+            client.subscribe("smarthome/pi3_bedroom_001/sensors/dht1")
+            client.subscribe("smarthome/pi3_bedroom_001/sensors/dht2")
+            client.subscribe("smarthome/pi2_kitchen_001/sensors/dht3")
+        elif component == "RGB_LED":
+            safe_print("Connected to MQTT Broker for RGB LED", component="MQTT")
+            client.subscribe("smarthome/pi3_bedroom_001/sensors/ir")
 
     else:
         safe_print(f"Failed to connect, return code {rc}", component="MQTT")
@@ -484,6 +493,11 @@ def run_pi_instance(pi_name, settings, args):
                     run_kitchen_gsg(cfg, threads, stop_event,
                                     print_fn=lambda m: safe_print(m, component="GSG"),
                                     mqtt_publisher=mqtt_publisher,device_id=device_id)
+                elif name == "IR":
+                    safe_print(f"{name} {cfg}", component="IR")
+                    run_ir(cfg, threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="IR"),
+                            mqtt_publisher=mqtt_publisher, device_id=device_id)
 
         safe_print("=" * 60, component="SYSTEM")
         safe_print("System running. Press Ctrl+C to stop.", component="SYSTEM")
