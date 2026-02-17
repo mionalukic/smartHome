@@ -137,6 +137,13 @@
             "rows": 2,
             "backlight": true,
             "refresh_interval": 5
+        },
+        "RGB_LED": {
+            "component": "RGB_LED",
+            "simulated": true,
+            "red_pin": 12,
+            "green_pin": 13,
+            "blue_pin": 19
         }
     }
 }
