@@ -17,6 +17,7 @@ from components.kitchen_button import run_kitchen_button
 from components.kitchen_4sd import run_kitchen_4sd
 from components.kitchen_dht import run_kitchen_dht
 from components.kitchen_gsg import run_kitchen_gsg
+from simulators.kitchen_gsg import simulate_gsg_high_movement
 from mqtt.actuator_listener import start_actuator_listener
 
 
@@ -81,20 +82,6 @@ def safe_print(message, *, component="SYSTEM", end="\n"):
     with _console_lock:
         print(f"{color}[{component}] {message}{RESET}", end=end, flush=True)
 
-def simulate_door(mqtt_publisher, device_id, state):
-    payload = {
-        "device_id": device_id,
-        "sensor_type": "door_sensor",
-        "component": "DS1",
-        "state": state,
-        "simulated": True,
-        "timestamp": time.time()
-    }
-    topic = f"smarthome/{device_id}/sensors/door"
-    mqtt_publisher.publish(topic, payload)
-    safe_print(f"Door simulated: {state}", component="DS1")
-
-
 def simulate_pin(mqtt_publisher, device_id, pin):
 
     topic = f"smarthome/{device_id}/sensors/dms"
@@ -137,6 +124,7 @@ def format_help():
         "  door open                  - simulate door open\n"
         "  door <pi> <component> <state>                 - simulate door close\n"
         "  pin <code>                 - send PIN sequence\n"
+        "  gsg                        - simulate GSG movement state\n"
     )
 
 def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publisher=None, device_id=None):
@@ -273,13 +261,22 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
 
             safe_print(f"{component} on {pi_target} -> {state}", component=component)
 
-
-
         elif op == "pin":
             if len(parts) > 1:
                 simulate_pin(mqtt_publisher, device_id, parts[1])
             else:
                 safe_print("Usage: pin <code>", component="SYSTEM")
+
+        elif op == "gsg":
+
+            simulate_gsg_high_movement(
+                mqtt_publisher,
+                "pi2",
+                component="GSG"
+            )
+
+            safe_print(f"GSG HIGH MOVEMENT triggered on pi2", component="GSG")
+
 
 
         else:

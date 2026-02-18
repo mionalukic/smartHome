@@ -58,3 +58,33 @@ def run_kitchen_gsg_simulator(stop_event,
         time.sleep(interval)
 
     print_fn("GSG simulator stopped")
+
+    
+def simulate_gsg_high_movement(mqtt_publisher,
+                                device_id,
+                                component="GSG"):
+
+    import time
+
+    accel = [50000, 50000, 50000]  # ekstremna vrednost
+    gyro = [1000, 1000, 1000]
+
+    payload = {
+        "device_id": device_id,
+        "sensor_type": "gyroscope",
+        "component": component,
+        "accel_x": accel[0],
+        "accel_y": accel[1],
+        "accel_z": accel[2],
+        "gyro_x": gyro[0],
+        "gyro_y": gyro[1],
+        "gyro_z": gyro[2],
+        "movement": True,
+        "simulated": True,
+        "timestamp": time.time()
+    }
+
+    topic = f"smarthome/{device_id}/sensors/{component.lower()}"
+
+    if mqtt_publisher and mqtt_publisher.connected:
+        mqtt_publisher.publish(topic, payload, use_batch=False)
