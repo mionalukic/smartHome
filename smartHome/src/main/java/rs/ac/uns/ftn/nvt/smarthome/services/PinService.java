@@ -2,6 +2,7 @@ package rs.ac.uns.ftn.nvt.smarthome.services;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import rs.ac.uns.ftn.nvt.smarthome.state.PinResult;
 
 @Service
 public class PinService {
@@ -14,6 +15,11 @@ public class PinService {
 
     @Value("${security.pin.timeoutMs:8000}")
     private long timeoutMs;
+
+    @Value("${security.pin.maxAttempts}")
+    private int maxAttempts;
+
+    private int failedAttempts = 0;
 
     private final StringBuilder buffer = new StringBuilder();
     private long lastKeyTime = 0;
@@ -41,14 +47,19 @@ public class PinService {
         String entered = buffer.substring(0, pinLength);
         buffer.setLength(0);
 
-        return entered.equals(correctPin) ? PinResult.OK : PinResult.INVALID;
-    }
+        if (entered.equals(correctPin)) {
+            failedAttempts = 0;
+            return PinResult.OK;
+        } else {
+            failedAttempts++;
+            System.out.println(failedAttempts);
+            if (failedAttempts >= maxAttempts) {
+                failedAttempts = 0;
+                return PinResult.LOCKED;
+            }
+            return PinResult.INVALID;
+        }
 
-    public enum PinResult {
-        IN_PROGRESS,
-        OK,
-        INVALID,
-        CLEARED,
-        IGNORED
     }
 }
+

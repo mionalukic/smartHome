@@ -5,6 +5,10 @@ import rs.ac.uns.ftn.nvt.smarthome.domain.SensorEvent;
 import rs.ac.uns.ftn.nvt.smarthome.interfaces.AlarmNotifier;
 import rs.ac.uns.ftn.nvt.smarthome.state.*;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 @Service
 public class SecurityStateService {
 
@@ -12,6 +16,18 @@ public class SecurityStateService {
     private final InfluxWriter influxWriter;
     private final ActuatorCommandService actuator;
     private final AlarmNotifier alarmNotifier; // web obaveštenje (stub za sada)
+    private final ScheduledExecutorService scheduler =
+            Executors.newSingleThreadScheduledExecutor();
+    public boolean isArmed() {
+        return stateStore.isArmed();
+    }
+    public boolean isAlarm() {
+        return stateStore.isAlarm();
+    }
+    public boolean isDisarmed() {
+        return stateStore.isDisarmed();
+    }
+
 
     public SecurityStateService(SystemStateStore stateStore,
                                 InfluxWriter influxWriter,
@@ -32,6 +48,26 @@ public class SecurityStateService {
 
         alarmNotifier.notifyModeChanged(SecurityMode.ARMED);
     }
+    public synchronized void armWithDelay(DisarmMethod method) {
+
+        if (!stateStore.isDisarmed()) return;
+
+        writeSecurityEvent("arming_pending", method.name(), null);
+
+        scheduler.schedule(() -> {
+            synchronized (SecurityStateService.this) {
+
+                if (!stateStore.isDisarmed()) return;
+
+                stateStore.setMode(SecurityMode.ARMED);
+                writeSecurityEvent("armed", method.name(), null);
+
+                alarmNotifier.notifyModeChanged(SecurityMode.ARMED);
+            }
+
+        }, 10, TimeUnit.SECONDS);
+    }
+
 
     public synchronized void triggerAlarm(AlarmReason reason, String sourceComponent) {
         if (!stateStore.isArmed()) return;           // ALARM samo iz ARMED
@@ -41,7 +77,6 @@ public class SecurityStateService {
         writeSecurityEvent("alarm_on", reason.name(), sourceComponent);
         stateStore.clearDoorOpen(sourceComponent);
 
-        // DB + BB obavezno
         actuator.send("smarthome/pi1_door_001/actuators/DB", "{\"command\":\"on\"}");
         actuator.send("smarthome/pi1_door_001/actuators/BB", "{\"command\":\"on\"}");
 
