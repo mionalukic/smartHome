@@ -19,6 +19,11 @@ public class SystemStateStore {
     public boolean isDisarmed() { return mode == SecurityMode.DISARMED; }
 
 
+    @Getter @Setter private int kitchenTimerSeconds = 0;
+    @Getter @Setter private int kitchenAddSecondsN = 10; // default
+    @Getter @Setter private boolean kitchenBlinking = false;
+    @Getter @Setter private long kitchenLastTickMs = System.currentTimeMillis();
+
 
     @Getter @Setter
     private int peopleCount = 0;

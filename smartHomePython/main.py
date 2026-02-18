@@ -313,7 +313,7 @@ def setup_mqtt(settings):
 
 def main(args):
     
-
+    display_instance = None
     settings = load_settings()
     pi_name, device, pi_settings = get_pi_context(settings, args)
     threads = []
@@ -339,7 +339,8 @@ def main(args):
             stop_event,
             run_db,
             run_dl,
-            safe_print
+            safe_print,
+            display_instance=None
         )
         
         if "--sensors" in args:
@@ -384,9 +385,14 @@ def main(args):
                                     mqtt_publisher=mqtt_publisher, device_id=device_id)
                 elif name == "4SD":
                     safe_print(f"{name} {cfg}", component="4SD")
-                    run_kitchen_4sd(cfg, threads, stop_event,
-                                    print_fn=lambda m: safe_print(m, component="4SD"), device_id=device_id)
-                    
+                    display_instance = run_kitchen_4sd(
+                                                        cfg,
+                                                        threads,
+                                                        stop_event,
+                                                        print_fn=lambda m: safe_print(m, component="4SD"),
+                                                        mqtt_publisher=mqtt_publisher,
+                                                        device_id=device_id
+                                                    )
                 elif name == "DHT3":
                     safe_print(f"{name} {cfg}", component="DHT3")
                     run_kitchen_dht(cfg, threads, stop_event,

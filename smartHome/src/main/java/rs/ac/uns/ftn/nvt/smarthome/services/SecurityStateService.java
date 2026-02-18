@@ -1,5 +1,7 @@
 package rs.ac.uns.ftn.nvt.smarthome.services;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 import rs.ac.uns.ftn.nvt.smarthome.domain.SensorEvent;
 import rs.ac.uns.ftn.nvt.smarthome.interfaces.AlarmNotifier;
@@ -27,7 +29,6 @@ public class SecurityStateService {
     public boolean isDisarmed() {
         return stateStore.isDisarmed();
     }
-
 
     public SecurityStateService(SystemStateStore stateStore,
                                 InfluxWriter influxWriter,
