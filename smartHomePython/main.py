@@ -18,6 +18,7 @@ from components.kitchen_4sd import run_kitchen_4sd
 from components.kitchen_dht import run_kitchen_dht
 from components.kitchen_gsg import run_kitchen_gsg
 from simulators.kitchen_gsg import simulate_gsg_high_movement
+from simulators.kitchen_button import publish_kitchen_button_press
 from mqtt.actuator_listener import start_actuator_listener
 
 
@@ -122,8 +123,9 @@ def format_help():
         "  led off                    - turn led off\n"
         "  quit | exit | q            - stop and exit\n"
         "  door open                  - simulate door open\n"
-        "  door <pi> <component> <state>                 - simulate door close\n"
+        "  door <pi> <component> <state>   - simulate door close\n"
         "  pin <code>                 - send PIN sequence\n"
+        "  btn                      - simulate kitchen button\n "
         "  gsg                        - simulate GSG movement state\n"
     )
 
@@ -276,7 +278,9 @@ def command_loop(stop_event, actuator_registry, pi1_settings, threads, mqtt_publ
             )
 
             safe_print(f"GSG HIGH MOVEMENT triggered on pi2", component="GSG")
-
+        elif op == "btn":
+            publish_kitchen_button_press(mqtt_publisher, device_id)
+            safe_print("Kitchen BTN simulated press", component="BTN")
 
 
         else:

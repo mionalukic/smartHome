@@ -40,6 +40,7 @@ def start_actuator_listener(device_id, pi_settings, threads, stop_event,
                 )
             elif topic.endswith("/actuators/4sd"):
                 payload = json.loads(msg.payload.decode())
+                safe_print(f"4SD COMMAND RECEIVED: {payload}", component="4SD")
                 if display_instance:
                     display_instance.handle_command(payload)
 

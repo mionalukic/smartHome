@@ -29,3 +29,23 @@ def run_kitchen_button_simulator(stop_event, print_fn=print,
             mqtt_publisher.publish(topic, payload, use_batch=True)
 
     print_fn("Kitchen BTN simulator stopped")
+
+
+def publish_kitchen_button_press(mqtt_publisher, device_id,
+                                 component="BTN", simulated=True):
+
+    if not mqtt_publisher or not mqtt_publisher.connected:
+        return
+
+    payload = {
+        "device_id": device_id,
+        "sensor_type": "kitchen_button",
+        "component": component,
+        "event": "pressed",
+        "value": 1,
+        "simulated": simulated,
+        "timestamp": time.time()
+    }
+
+    topic = f"smarthome/{device_id}/sensors/{component.lower()}"
+    mqtt_publisher.publish(topic, payload, use_batch=True)

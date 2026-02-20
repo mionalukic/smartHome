@@ -63,7 +63,7 @@ class MPU6050:
     __dev_id = 0
     __bus = None
 
-    def __init__(self, a_bus=1, a_address=C.MPU6050_DEFAULT_ADDRESS,
+    def __init__(self, a_bus=1, a_address=C.MPUConstants.MPU6050_DEFAULT_ADDRESS,
                  a_xAOff=None, a_yAOff=None, a_zAOff=None, a_xGOff=None,
                  a_yGOff=None, a_zGOff=None, a_debug=False):
         self.__dev_id = a_address
