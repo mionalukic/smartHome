@@ -64,20 +64,20 @@ class LCD:
         self.lcd.clear()
         self.lcd.message(f"{line1}\n{line2}")
 
-    def lcd_thread_func(lcd, sensor_keys, stop_event,
-        print_fn=print, dht_data=None, refresh=5):
-        index = 0
-        while not stop_event.is_set():
-            sensor_name = sensor_keys[index]
-            temp, hum = dht_data.get(sensor_name, (0.0, 0.0))
+def run_lcd_loop(lcd, sensor_keys, stop_event,
+    print_fn=print, dht_data=None, refresh=5):
+    index = 0
+    while not stop_event.is_set():
+        sensor_name = sensor_keys[index]
+        temp, hum = dht_data.get(sensor_name, (0.0, 0.0))
 
-            lcd.display(
-                line1=f"{sensor_name} Temp:",
-                line2=f"{temp:.1f}C Hum:{hum:.1f}%"
-            )
+        lcd.display(
+            line1=f"{sensor_name} Temp:",
+            line2=f"{temp:.1f}C Hum:{hum:.1f}%"
+        )
 
-            index = (index + 1) % len(sensor_keys)
-            time.sleep(refresh)
+        index = (index + 1) % len(sensor_keys)
+        time.sleep(refresh)
 
-        lcd.lcd.clear()
-        print_fn("LCD stopped")
+    lcd.lcd.clear()
+    print_fn("LCD stopped")
