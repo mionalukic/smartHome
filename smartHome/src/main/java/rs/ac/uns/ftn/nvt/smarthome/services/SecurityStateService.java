@@ -78,12 +78,8 @@ public class SecurityStateService {
         writeSecurityEvent("alarm_on", reason.name(), sourceComponent);
         stateStore.clearDoorOpen(sourceComponent);
 
-        actuator.send("smarthome/pi1_door_001/actuators/DB", "{\"command\":\"on\"}");
-        actuator.send("smarthome/pi1_door_001/actuators/BB", "{\"command\":\"on\"}");
 
         actuator.send("smarthome/pi1_door_001/actuators/door_buzzer", "{\"command\":\"on\"}");
-        actuator.send("smarthome/pi1_door_001/actuators/door_light", "{\"command\":\"on\"}");
-
         alarmNotifier.notifyAlarmOn(reason, sourceComponent);
     }
 
@@ -93,10 +89,7 @@ public class SecurityStateService {
         stateStore.setMode(SecurityMode.ARMED);
         writeSecurityEvent("alarm_off", method.name(), null);
 
-        actuator.send("smarthome/pi1_door_001/actuators/DB", "{\"command\":\"off\"}");
-        actuator.send("smarthome/pi1_door_001/actuators/BB", "{\"command\":\"off\"}");
         actuator.send("smarthome/pi1_door_001/actuators/door_buzzer", "{\"command\":\"off\"}");
-        actuator.send("smarthome/pi1_door_001/actuators/door_light", "{\"command\":\"off\"}");
 
         alarmNotifier.notifyAlarmOff(method);
     }

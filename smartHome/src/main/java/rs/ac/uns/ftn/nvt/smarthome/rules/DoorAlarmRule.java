@@ -38,16 +38,13 @@ public class DoorAlarmRule implements SensorRule {
         String state = e.getState();
 
         if ("open".equalsIgnoreCase(state)) {
-            stateStore.markDoorOpen(c, nowMs);
-
-            Long since = stateStore.getDoorOpenSince(c);
 
             if (!stateStore.isArmed()) return;
 
-            if (since != null && nowMs - since >= OPEN_TOO_LONG_MS) {
-                securityStateService.triggerAlarm(AlarmReason.DOOR_OPEN_TOO_LONG, c);
+            if (!stateStore.isEntryPending()) {
+                stateStore.startEntryDelay(c);
+                System.out.println("ENTRY DELAY STARTED for " + c);
             }
-
 
         } else if ("closed".equalsIgnoreCase(state)) {
             stateStore.clearDoorOpen(c);
@@ -66,18 +63,24 @@ public class DoorAlarmRule implements SensorRule {
             if (!stateStore.isArmed()) return;
             if (stateStore.isAlarm()) return;
 
-            long now = System.currentTimeMillis();
 
             for (String component : new String[]{"DS1","DS2"}) {
 
                 Long since = stateStore.getDoorOpenSince(component);
+                if (stateStore.isEntryPending()) {
 
-                if (since != null && now - since >= OPEN_TOO_LONG_MS) {
+                    long now = System.currentTimeMillis();
+                    long diff = now - stateStore.getEntryStartedAtMs();
 
-                    securityStateService.triggerAlarm(
-                            AlarmReason.DOOR_OPEN_TOO_LONG,
-                            component
-                    );
+                    if (diff >= OPEN_TOO_LONG_MS) {
+
+                        securityStateService.triggerAlarm(
+                                AlarmReason.DOOR_OPEN_TOO_LONG,
+                                stateStore.getEntryDoorComponent()
+                        );
+
+                        stateStore.cancelEntryDelay();
+                    }
                 }
             }
 

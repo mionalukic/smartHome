@@ -8,16 +8,19 @@ import rs.ac.uns.ftn.nvt.smarthome.services.SecurityStateService;
 import rs.ac.uns.ftn.nvt.smarthome.state.AlarmReason;
 import rs.ac.uns.ftn.nvt.smarthome.state.DisarmMethod;
 import rs.ac.uns.ftn.nvt.smarthome.state.PinResult;
+import rs.ac.uns.ftn.nvt.smarthome.state.SystemStateStore;
 
 @Component
 public class PinRule implements SensorRule {
 
     private final PinService pinService;
     private final SecurityStateService security;
+    private final SystemStateStore stateStore;
 
-    public PinRule(PinService pinService, SecurityStateService security) {
+    public PinRule(PinService pinService, SecurityStateService security, SystemStateStore stateStore) {
         this.pinService = pinService;
         this.security = security;
+        this.stateStore = stateStore;
     }
 
     public void onEvent(SensorEvent e) {
@@ -30,7 +33,14 @@ public class PinRule implements SensorRule {
         PinResult r = pinService.pushKey(e.getKey());
 
 
-        if (r ==PinResult.OK) {
+        if (r == PinResult.OK) {
+
+            if (stateStore.isEntryPending()) {
+                stateStore.cancelEntryDelay();
+                security.disarm(DisarmMethod.PIN_PAD);
+                System.out.println("ENTRY DELAY CANCELED - CORRECT PIN");
+                return;
+            }
 
             if (security.isDisarmed()) {
                 security.armWithDelay(DisarmMethod.PIN_PAD);
@@ -44,6 +54,18 @@ public class PinRule implements SensorRule {
                     AlarmReason.MANUAL_TRIGGER,
                     "PIN_PAD"
             );
+        }
+        else if (r == PinResult.INVALID) {
+
+            if (stateStore.isEntryPending()) {
+
+                security.triggerAlarm(
+                        AlarmReason.INVALID_PIN,
+                        "PIN_PAD"
+                );
+
+                stateStore.cancelEntryDelay();
+            }
         }
 
     }

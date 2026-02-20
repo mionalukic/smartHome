@@ -43,6 +43,26 @@ public class SystemStateStore {
     }
 
 
+    @Getter
+    private volatile boolean entryPending = false;
+    @Getter
+    private volatile String entryDoorComponent = null;
+    @Getter
+    private volatile long entryStartedAtMs = 0;
+
+    public void startEntryDelay(String component) {
+        this.entryPending = true;
+        this.entryDoorComponent = component;
+        this.entryStartedAtMs = System.currentTimeMillis();
+    }
+
+    public void cancelEntryDelay() {
+        this.entryPending = false;
+        this.entryDoorComponent = null;
+        this.entryStartedAtMs = 0;
+    }
+
+
     // Čuvamo ceo event po komponenti
     private final Map<String, SensorEvent> lastSensorEvents =
             new ConcurrentHashMap<>();
