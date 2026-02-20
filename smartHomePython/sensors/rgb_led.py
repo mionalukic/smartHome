@@ -118,6 +118,7 @@ def run_rgb_led_loop(rgb, stop_event, color_queue,
                         rgb.lightBlue()
                     else:
                         rgb.turnOff()
+                    print_fn(f"Set color to {current_command}")
 
                     last_command = current_command
             except Empty:
