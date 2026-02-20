@@ -4,7 +4,6 @@ import time
 import signal
 from datetime import datetime
 import paho.mqtt.client as mqtt
-from components.lcd_display import on_dht_message
 
 COLORS = {
     "SUBSCRIBER": "\033[38;5;51m",   # bright cyan
