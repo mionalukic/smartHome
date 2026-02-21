@@ -116,7 +116,7 @@
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"lcd\")"
+          "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"lcd_display\")"
         }
       ]
     },
