@@ -1,0 +1,22 @@
+<mat-card class="camera-card">
+  <div class="camera-header">
+    <h2>Security Camera</h2>
+    <button mat-button (click)="reload()">Reload</button>
+  </div>
+
+  <div class="status">
+    <span class="pill" [class.off]="isOffline">
+      {{ isOffline ? 'OFFLINE' : 'LIVE' }}
+    </span>
+    <span class="meta">FPS: {{ fps }}</span>
+  </div>
+
+  <div class="camera-frame" *ngIf="connected">
+    <img
+      [src]="streamUrl"
+      (load)="onLoad()"
+      (error)="onError()"
+      alt="Live stream"
+    />
+  </div>
+</mat-card>
