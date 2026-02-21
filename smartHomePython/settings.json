@@ -105,5 +105,50 @@
             "threshold": 20000
         }
         
+    },
+
+    "PI3": {
+        "device": {
+            "device_id": "pi3_bedroom_001",
+            "location": "Bedroom"
+        },
+        "DPIR3": {
+            "simulated": true,
+            "component": "DPIR3",
+            "pin": 6
+        },
+        "DHT1": {
+            "simulated": true,
+            "component": "DHT1",
+            "pin": 17,
+            "interval": 2
+        },
+        "DHT2": {
+            "simulated": true,
+            "component": "DHT2",
+            "pin": 18,
+            "interval": 2
+        },
+        "LCD": {
+            "component": "LCD",
+            "simulated": true,
+            "i2c_address": "0x27",
+            "cols": 16,
+            "rows": 2,
+            "backlight": true,
+            "refresh_interval": 5
+        },
+        "RGB_LED": {
+            "component": "RGB_LED",
+            "simulated": true,
+            "red_pin": 12,
+            "green_pin": 13,
+            "blue_pin": 19
+        },
+        "IR": {
+            "simulated": true,
+            "component": "IR",
+            "pin": 17
+        }
     }
 }

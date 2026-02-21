@@ -12,6 +12,11 @@ def start_actuator_listener(device_id, pi_settings, threads, stop_event,
         client.subscribe(topic)
 
     def on_message(client, userdata, msg):
+        if "rgb_led" in msg.topic:
+            return
+        if "lcd_display" in msg.topic:
+            return
+        # safe_print(f"Received MQTT message on topic {msg.topic}", component="MQTT")
         try:
             payload = json.loads(msg.payload.decode())
             topic = msg.topic
