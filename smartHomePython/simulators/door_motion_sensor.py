@@ -1,6 +1,8 @@
 import time
 import random
 
+from components.door_light import turn_on
+
 
 def run_dpir_simulator(stop_event, print_fn=print,
                        mqtt_publisher=None, device_id='pi',
@@ -10,10 +12,10 @@ def run_dpir_simulator(stop_event, print_fn=print,
 
     while not stop_event.is_set():
         duration = random.randint(3, 5)
-
+        time.sleep(5)
         ts = time.time()
         print_fn(f"{component} Detected movement")
-
+        turn_on()
         if mqtt_publisher and mqtt_publisher.connected:
             payload = {
                 "device_id": device_id,
