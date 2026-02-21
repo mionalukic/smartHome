@@ -1,0 +1,154 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "schemaVersion": 42,
+  "style": "dark",
+  "tags": ["smart-home"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "Smart Home - Full Device Monitoring",
+  "uid": "smart-home-full-v3",
+  "version": 1,
+  "panels": [
+
+    { "id": 1, "type": "state-timeline", "title": "DS1 - Door Sensor 1",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"door_sensor\" and r._field==\"value\")" }]
+    },
+
+    { "id": 2, "type": "state-timeline", "title": "DS2 - Door Sensor 2",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"door_sensor\" and r.component==\"DS2\" and r._field==\"value\")" }]
+    },
+
+    { "id": 3, "type": "state-timeline", "title": "DL - Door Light",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"door_light\" and r._field==\"value\")" }]
+    },
+
+    { "id": 4, "type": "timeseries", "title": "DUS1 - Ultrasonic Sensor 1",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"ultrasonic_sensor\" and r._field==\"distance\")" }]
+    },
+
+    { "id": 5, "type": "timeseries", "title": "DUS2 - Ultrasonic Sensor 2",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"ultrasonic_sensor\" and r.component==\"DUS2\" and r._field==\"distance\")" }]
+    },
+
+    { "id": 6, "type": "state-timeline", "title": "DB - Door Buzzer",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"door_buzzer\" and r._field==\"value\")" }]
+    },
+
+    { "id": 7, "type": "state-timeline", "title": "DPIR1 - Door Motion 1",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"door_motion_sensor\" and r._field==\"value\")" }]
+    },
+
+    { "id": 8, "type": "state-timeline", "title": "DPIR2 - Door Motion 2",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"door_motion_sensor\" and r.component==\"DPIR2\" and r._field==\"value\")" }]
+    },
+
+    { "id": 9, "type": "timeseries", "title": "DMS - Door Membrane Switch",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"door_membrane_switch\")" }]
+    },
+
+    { "id": 10, "type": "timeseries", "title": "4SD - Kitchen 7 Segment",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"seven_segment\" and r._field==\"value\")" }]
+    },
+
+    { "id": 11, "type": "state-timeline", "title": "BTN - Kitchen Button",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 40 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"kitchen_button\" and r._field==\"value\")" }]
+    },
+
+    { "id": 12, "type": "timeseries", "title": "DHT3 - Kitchen DHT",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r.component==\"DHT3\")" }]
+    },
+
+    { "id": 13, "type": "timeseries", "title": "GSG - Gyroscope",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 48 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"gyroscope\")" }]
+    },
+
+    { "id": 14, "type": "timeseries", "title": "DHT1 - Bedroom DHT",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 48 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r.component==\"DHT1\")" }]
+    },
+
+    { "id": 15, "type": "timeseries", "title": "DHT2 - Master Bedroom DHT",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 56 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r.component==\"DHT2\")" }]
+    },
+
+    { "id": 16, "type": "timeseries", "title": "DPIR3 - Living Room Motion",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 56 },
+      "targets": [{ "refId": "A", "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r.component==\"DPIR3\")" }]
+    },
+
+    {
+      "id": 17,
+      "type": "table",
+      "title": "LCD - Living Room Display",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 64 },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"lcd\")"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "table",
+      "title": "BRGB - Bedroom RGB",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 80 },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"rgb_led\")"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "IR - Bedroom Infrared",
+      "datasource": { "type": "influxdb", "uid": "ffbikhloylblsf" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 80 },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket:\"smartHome\") |> range(start:-6h) |> filter(fn:(r)=> r._measurement==\"ir\" and r._field==\"value\")"
+        }
+      ]    
+    }
+  ]
+}
