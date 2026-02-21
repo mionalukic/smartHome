@@ -4,8 +4,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rs.ac.uns.ftn.nvt.smarthome.services.SecurityStateService;
 import rs.ac.uns.ftn.nvt.smarthome.state.DisarmMethod;
+import rs.ac.uns.ftn.nvt.smarthome.state.PinResult;
 import rs.ac.uns.ftn.nvt.smarthome.state.SecurityMode;
 import rs.ac.uns.ftn.nvt.smarthome.state.SystemStateStore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/security")
@@ -39,7 +43,30 @@ public class SecurityController {
     }
 
     @GetMapping("/status")
-    public ResponseEntity<SecurityMode> status() {
-        return ResponseEntity.ok(stateStore.getMode());
+    public ResponseEntity<?> status() {
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("mode", stateStore.getMode());
+        response.put("reason", stateStore.getLastAlarmReason());
+        response.put("source", stateStore.getLastAlarmSource());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/pin")
+    public ResponseEntity<?> enterPin(@RequestBody Map<String,String> body) {
+
+        String key = body.get("key");
+
+        PinResult result = security.processPinForModeChange(key);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("result", result.name());
+        response.put("mode", stateStore.getMode());
+        response.put("reason", stateStore.getLastAlarmReason());
+        response.put("source", stateStore.getLastAlarmSource());
+
+        return ResponseEntity.ok(response);
     }
 }

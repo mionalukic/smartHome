@@ -19,6 +19,12 @@ public class SystemStateStore {
     public boolean isDisarmed() { return mode == SecurityMode.DISARMED; }
 
 
+    @Getter @Setter private int kitchenTimerSeconds = 0;
+    @Getter @Setter private int kitchenAddSecondsN = 10; // default
+    @Getter @Setter private boolean kitchenBlinking = false;
+    @Getter @Setter private long kitchenLastTickMs = System.currentTimeMillis();
+    @Getter @Setter private String lastAlarmReason;
+    @Getter @Setter private String lastAlarmSource;
 
     @Getter @Setter
     private int peopleCount = 0;
@@ -35,6 +41,26 @@ public class SystemStateStore {
 
     public Long getDoorOpenSince(String component) {
         return doorOpenSinceMs.get(component);
+    }
+
+
+    @Getter
+    private volatile boolean entryPending = false;
+    @Getter
+    private volatile String entryDoorComponent = null;
+    @Getter
+    private volatile long entryStartedAtMs = 0;
+
+    public void startEntryDelay(String component) {
+        this.entryPending = true;
+        this.entryDoorComponent = component;
+        this.entryStartedAtMs = System.currentTimeMillis();
+    }
+
+    public void cancelEntryDelay() {
+        this.entryPending = false;
+        this.entryDoorComponent = null;
+        this.entryStartedAtMs = 0;
     }
 
 

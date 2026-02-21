@@ -27,6 +27,7 @@ public class SensorEvent {
     private Double gyro_x;
     private Double gyro_y;
     private Double gyro_z;
+    private Boolean movement;
 
     private Double pitch;
     private Double duration;

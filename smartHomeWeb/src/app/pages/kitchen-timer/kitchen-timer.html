@@ -1,0 +1,36 @@
+<div class="timer-container">
+
+  <mat-card class="timer-card">
+
+    <!-- CONFIG ZONA -->
+    <div class="timer-grid">
+
+      <div class="config-block">
+        <input type="number"
+               [(ngModel)]="formSeconds"
+               placeholder="Enter seconds">
+
+        <button (click)="updateTime()"
+                [disabled]="formSeconds === undefined || formSeconds <= 0">
+          Set
+        </button>
+      </div>
+
+      <div class="config-block">
+        <input type="number"
+               [(ngModel)]="formAddN"
+               placeholder="Add N seconds">
+
+        <button (click)="updateAddN()"
+                [disabled]="formAddN === undefined || formAddN <= 0">
+          Save
+        </button>
+      </div>
+
+
+
+    </div>
+
+  </mat-card>
+
+</div>

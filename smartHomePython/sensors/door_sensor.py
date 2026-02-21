@@ -5,13 +5,13 @@ except ImportError:
     GPIO = None
 
 class DS1(object):
-    def __init__(self, pin):
+    def __init__(self, pin,component):
         self.pin = pin
         self.print_fn = print
         self.mqtt_publisher = None
-        self.device_id = 'pi1'
+        self.component = component
         
-    def setup(self, print_fn=print, mqtt_publisher=None, device_id='pi1'):
+    def setup(self, print_fn=print, mqtt_publisher=None, device_id='pi', component='DS'):
         if GPIO is None:
             print_fn("GPIO not available, cannot setup door sensor")
             return
@@ -20,6 +20,8 @@ class DS1(object):
         self.print_fn = print_fn
         self.mqtt_publisher = mqtt_publisher
         self.device_id = device_id
+        self.component = component
+
         
         GPIO.add_event_detect(self.pin, GPIO.FALLING, callback=self.door_opened, bouncetime=200)
         GPIO.add_event_detect(self.pin, GPIO.RISING, callback=self.door_closed, bouncetime=200)
@@ -31,14 +33,14 @@ class DS1(object):
             data = {
                 "device_id": self.device_id,
                 "sensor_type": "door_sensor",
-                "component": "DS1",
+                "component": self.component,
                 "pin": self.pin,
                 "state": "open",
                 "value": 1,
                 "timestamp": time.time()
             }
             
-            topic = f"smarthome/{self.device_id}/sensors/ds1"
+            topic = f"smarthome/{self.device_id}/sensors/{self.component.lower()}"
             self.mqtt_publisher.publish(topic, data, use_batch=True)
     
     def door_closed(self, channel):
@@ -48,14 +50,14 @@ class DS1(object):
             data = {
                 "device_id": self.device_id,
                 "sensor_type": "door_sensor",
-                "component": "DS1",
+                "component": self.component,
                 "pin": self.pin,
                 "state": "closed",
                 "value": 0,
                 "timestamp": time.time()
             }
             
-            topic = f"smarthome/{self.device_id}/sensors/ds1"
+            topic = f"smarthome/{self.device_id}/sensors/{self.component.lower()}"
             self.mqtt_publisher.publish(topic, data, use_batch=True)
 
 def run_ds1_button(pin, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):

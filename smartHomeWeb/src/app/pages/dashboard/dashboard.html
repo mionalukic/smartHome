@@ -1,0 +1,36 @@
+<div class="grid">
+
+  <!-- STATUS -->
+  <mat-card class="card">
+    <mat-card-title>Security</mat-card-title>
+    <mat-card-content>
+      <div class="row">
+        <div class="label">Mode</div>
+        <div class="pill" [class.alarm]="mode==='ALARM'" [class.armed]="mode==='ARMED'">
+          {{ mode || '...' }}
+        </div>
+      </div>
+
+      <div class="actions">
+        <button mat-stroked-button (click)="arm()">ARM</button>
+        <button mat-stroked-button (click)="disarm()">DISARM</button>
+        <button mat-stroked-button (click)="alarmOff()">ALARM OFF</button>
+      </div>
+
+      <div class="small" *ngIf="lastMessage">{{ lastMessage }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- GRAFANA EMBED -->
+  <mat-card class="card wide">
+    <mat-card-title>Grafana</mat-card-title>
+    <mat-card-content>
+      <iframe
+        class="grafana"
+        [src]="grafanaUrlSafe"
+        loading="lazy">
+      </iframe>
+    </mat-card-content>
+  </mat-card>
+
+</div>

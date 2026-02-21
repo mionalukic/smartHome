@@ -1,0 +1,40 @@
+
+<mat-sidenav-container class="app">
+  <mat-sidenav mode="side" opened class="sidenav">
+    <div class="brand">
+      <div class="logo"></div>
+      <div class="title">SmartHome</div>
+    </div>
+
+    <mat-nav-list>
+      <a mat-list-item routerLink="/" routerLinkActive="active">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </a>
+
+      <a mat-list-item routerLink="/security" routerLinkActive="active">
+        <mat-icon>security</mat-icon>
+        <span>Security</span>
+      </a>
+      <a mat-list-item routerLink="/timer">
+        <mat-icon>timer</mat-icon>
+        Timer
+      </a>
+      <a mat-list-item routerLink="/camera" routerLinkActive="active">
+        <mat-icon>video cam</mat-icon>
+        <span>Camera</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar class="toolbar" color="transparent">
+      <span class="spacer"></span>
+      <span class="hint">Local</span>
+    </mat-toolbar>
+
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

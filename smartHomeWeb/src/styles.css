@@ -1,0 +1,33 @@
+/* You can add global styles to this file, and also import other style files */
+
+:root{
+  --bg-main:#f4f1ea;
+  --bg-card:#ffffff;
+  --bg-soft:#ece7de;
+
+  --primary:#6b7a6f;
+  --accent:#a67c52;
+  --danger:#b94a48;
+  --success:#6b8e23;
+
+  --text-main:#2e2e2e;
+  --text-soft:#6a6a6a;
+
+  --border-soft:#ded8cd;
+  --shadow: 0 6px 18px rgba(0,0,0,0.06);
+  --radius: 18px;
+}
+
+html, body{
+  height:100%;
+}
+
+body{
+  margin:0;
+  background:var(--bg-main);
+  color:var(--text-main);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.mat-mdc-button, .mat-mdc-outlined-button, .mat-mdc-raised-button{
+  border-radius: 12px !important;
+}

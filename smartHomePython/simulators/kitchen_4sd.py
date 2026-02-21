@@ -1,47 +1,47 @@
 import time
+import threading
 
-def run_4sd_simulator(
-    stop_event,
-    print_fn=print,
-    start_seconds=30,
-    blink_seconds=5
-):
-    """
-    4SD simulator:
-    - broji unazad od start_seconds
-    - na 0 treperi blink_seconds
-    - restartuje brojač
-    """
 
-    print_fn(f"4SD simulator started ({start_seconds}s)")
-    remaining = start_seconds
-    blink = False
-    blink_count = 0
+def run_4sd_simulator(stop_event, print_fn, state):
 
-    while not stop_event.is_set():
+    print_fn("4SD simulator started")
 
-        if remaining > 0:
-            mm = remaining // 60
-            ss = remaining % 60
-            print_fn(f"4SD DISPLAY: {mm:02d}{ss:02d}")
-            remaining -= 1
-            time.sleep(1)
+    visible = True
 
+    while not stop_event.wait(0.5):
+
+        value, blink = state.get()
+
+        if blink:
+            visible = not visible
         else:
-            # BLINK STATE
-            if blink_count < blink_seconds:
-                blink = not blink
-                if blink:
-                    print_fn("4SD DISPLAY: 0000")
-                else:
-                    print_fn("4SD DISPLAY:    ")
-                blink_count += 1
+            visible = True
+
+        if visible:
+            print_fn(f"4SD DISPLAY: {value}")
+        else:
+            print_fn("4SD DISPLAY:    ")
+            
+class Kitchen4SDSimulator:
+
+    def __init__(self, print_fn=print):
+        self.print_fn = print_fn
+        self.value = "0000"
+        self.blink = False
+
+    def handle_command(self, payload):
+        if payload.get("command") == "display":
+            self.value = payload.get("mmss", "0000")
+            self.blink = payload.get("blink", False)
+
+    def run(self, stop_event):
+        while not stop_event.is_set():
+
+            if self.blink:
+                self.print_fn("4SD DISPLAY: 0000")
+                time.sleep(0.5)
+                self.print_fn("4SD DISPLAY:    ")
                 time.sleep(0.5)
             else:
-                # RESET
-                print_fn("4SD RESET")
-                remaining = start_seconds
-                blink_count = 0
-                blink = False
-
-    print_fn("4SD simulator stopped")
+                self.print_fn(f"4SD DISPLAY: {self.value}")
+                time.sleep(1)

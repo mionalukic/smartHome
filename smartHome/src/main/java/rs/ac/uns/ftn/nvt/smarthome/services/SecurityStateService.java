@@ -1,9 +1,15 @@
 package rs.ac.uns.ftn.nvt.smarthome.services;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 import rs.ac.uns.ftn.nvt.smarthome.domain.SensorEvent;
 import rs.ac.uns.ftn.nvt.smarthome.interfaces.AlarmNotifier;
 import rs.ac.uns.ftn.nvt.smarthome.state.*;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class SecurityStateService {
@@ -12,15 +18,53 @@ public class SecurityStateService {
     private final InfluxWriter influxWriter;
     private final ActuatorCommandService actuator;
     private final AlarmNotifier alarmNotifier; // web obaveštenje (stub za sada)
+    private final ScheduledExecutorService scheduler =
+            Executors.newSingleThreadScheduledExecutor();
+    private final PinService pinService;
+    public boolean isArmed() {
+        return stateStore.isArmed();
+    }
+    public boolean isAlarm() {
+        return stateStore.isAlarm();
+    }
+    public boolean isDisarmed() {
+        return stateStore.isDisarmed();
+    }
+
+    public synchronized PinResult submitPin(String key) {
+        return pinService.pushKey(key);
+    }
+    public synchronized PinResult processPinForModeChange(String key) {
+
+        PinResult result = pinService.pushKey(key);
+
+        if (result == PinResult.OK) {
+
+            if (stateStore.isAlarm()) {
+                deactivateAlarm(DisarmMethod.WEB);
+                stateStore.setMode(SecurityMode.DISARMED);
+            }
+            else if (stateStore.isDisarmed()) {
+                arm(DisarmMethod.WEB);
+            }
+            else if (stateStore.isArmed()) {
+                disarm(DisarmMethod.WEB);
+            }
+        }
+
+        return result;
+    }
 
     public SecurityStateService(SystemStateStore stateStore,
                                 InfluxWriter influxWriter,
                                 ActuatorCommandService actuator,
-                                AlarmNotifier alarmNotifier) {
+                                AlarmNotifier alarmNotifier,
+                                PinService pinService) {
         this.stateStore = stateStore;
         this.influxWriter = influxWriter;
         this.actuator = actuator;
         this.alarmNotifier = alarmNotifier;
+        this.pinService = pinService;
     }
 
     public synchronized void arm(DisarmMethod method) {
@@ -32,22 +76,39 @@ public class SecurityStateService {
 
         alarmNotifier.notifyModeChanged(SecurityMode.ARMED);
     }
+    public synchronized void armWithDelay(DisarmMethod method) {
+
+        if (!stateStore.isDisarmed()) return;
+
+        writeSecurityEvent("arming_pending", method.name(), null);
+
+        scheduler.schedule(() -> {
+            synchronized (SecurityStateService.this) {
+
+                if (!stateStore.isDisarmed()) return;
+
+                stateStore.setMode(SecurityMode.ARMED);
+                writeSecurityEvent("armed", method.name(), null);
+
+                alarmNotifier.notifyModeChanged(SecurityMode.ARMED);
+            }
+
+        }, 10, TimeUnit.SECONDS);
+    }
+
 
     public synchronized void triggerAlarm(AlarmReason reason, String sourceComponent) {
         if (!stateStore.isArmed()) return;           // ALARM samo iz ARMED
         if (stateStore.isAlarm()) return;
 
         stateStore.setMode(SecurityMode.ALARM);
+        stateStore.setLastAlarmReason(reason.name());
+        stateStore.setLastAlarmSource(sourceComponent);
         writeSecurityEvent("alarm_on", reason.name(), sourceComponent);
         stateStore.clearDoorOpen(sourceComponent);
 
-        // DB + BB obavezno
-        actuator.send("smarthome/pi1_door_001/actuators/DB", "{\"command\":\"on\"}");
-        actuator.send("smarthome/pi1_door_001/actuators/BB", "{\"command\":\"on\"}");
 
         actuator.send("smarthome/pi1_door_001/actuators/door_buzzer", "{\"command\":\"on\"}");
-        actuator.send("smarthome/pi1_door_001/actuators/door_light", "{\"command\":\"on\"}");
-
         alarmNotifier.notifyAlarmOn(reason, sourceComponent);
     }
 
@@ -55,12 +116,11 @@ public class SecurityStateService {
         if (!stateStore.isAlarm()) return;
 
         stateStore.setMode(SecurityMode.ARMED);
+        stateStore.setLastAlarmReason(null);
+        stateStore.setLastAlarmSource(null);
         writeSecurityEvent("alarm_off", method.name(), null);
 
-        actuator.send("smarthome/pi1_door_001/actuators/DB", "{\"command\":\"off\"}");
-        actuator.send("smarthome/pi1_door_001/actuators/BB", "{\"command\":\"off\"}");
         actuator.send("smarthome/pi1_door_001/actuators/door_buzzer", "{\"command\":\"off\"}");
-        actuator.send("smarthome/pi1_door_001/actuators/door_light", "{\"command\":\"off\"}");
 
         alarmNotifier.notifyAlarmOff(method);
     }

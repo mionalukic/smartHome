@@ -8,16 +8,17 @@ from settings import load_settings
 from components.door_buzzer import run_db
 from components.door_motion_sensor import run_dpir
 from components.door_membrane_switch import run_dms
-from components.door_sensor1 import run_ds1
+from components.door_sensor import run_ds, publish_door_event
 from components.door_light import run_dl
 from mqtt.publisher import MQTTPublisher
 from mqtt.config import MQTTConfig
-from components.door_sensor2 import run_ds2
 from components.door_ultrasonic_sensor import run_dus
 from components.kitchen_button import run_kitchen_button
 from components.kitchen_4sd import run_kitchen_4sd
 from components.dht import run_dht
 from components.kitchen_gsg import run_kitchen_gsg
+from simulators.kitchen_gsg import simulate_gsg_high_movement
+from simulators.kitchen_button import publish_kitchen_button_press
 from mqtt.actuator_listener import start_actuator_listener
 from components.lcd_display import on_dht_message, run_lcd
 import paho.mqtt.client as mqtt
@@ -143,8 +144,10 @@ def format_help():
         "  led on                     - turn led on\n"
         "  led off                    - turn led off\n"
         "  door open                  - simulate door open\n"
-        "  door close                 - simulate door close\n"
+        "  door <pi> <component> <state>   - simulate door close\n"
         "  pin <code>                 - send PIN sequence\n"
+        "  btn                      - simulate kitchen button\n "
+        "  gsg                        - simulate GSG movement state\n"
         "  lcd on                     - turn LCD on\n"
         "  lcd off                    - turn LCD off\n"
         "  rgb on <color>             - turn RGB LED on with specified color\n"
@@ -274,17 +277,36 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                     safe_print("Usage: led on | led off", component="SYSTEM")
 
             elif op == "door":
-                sub = parts[1].lower() if len(parts) > 1 else ""
 
-                if sub == "open":
-                    simulate_door(mqtt_publisher, device_id, "open")
+                if len(parts) < 4:
+                    safe_print("Usage: door <pi1|pi2> <ds1|ds2> <open|close>", component="SYSTEM")
+                    continue
 
-                elif sub == "close":
-                    simulate_door(mqtt_publisher, device_id, "closed")
+                pi_target = parts[1].lower()
+                component = parts[2].upper()
+                state = parts[3].lower()
 
-                else:
-                    safe_print("Usage: door open | door close", component="SYSTEM")
+                if pi_target not in ["pi1", "pi2"]:
+                    safe_print("PI must be pi1 or pi2", component="SYSTEM")
+                    continue
 
+                if component not in ["DS1", "DS2"]:
+                    safe_print("Component must be DS1 or DS2", component="SYSTEM")
+                    continue
+
+                if state not in ["open", "close"]:
+                    safe_print("State must be open or close", component="SYSTEM")
+                    continue
+
+                publish_door_event(
+                    mqtt_publisher,
+                    pi_target,
+                    component,
+                    state,
+                    simulated=True
+                )
+
+                safe_print(f"{component} on {pi_target} -> {state}", component=component)
 
             elif op == "pin":
                 if len(parts) > 1:
@@ -313,7 +335,7 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                             state=False)
 
                     actuator_registry.discard("LCD")
-          
+        
                 else:
                     safe_print("Usage: lcd on | lcd off", component="SYSTEM")
             elif op == "rgb":
@@ -336,7 +358,21 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
 
                     actuator_registry.discard("RGB_LED")
                 elif sub in ("white", "red", "green", "blue", "yellow", "purple", "light_blue"):
-                    simulate_rgb_color_change(mqtt_publisher, sub, device_id)
+                    simulate_rgb_color_change(mqtt_publisher, sub, device_id)        
+            elif op == "gsg":
+
+                simulate_gsg_high_movement(
+                    mqtt_publisher,
+                    "pi2",
+                    component="GSG"
+                )
+
+                safe_print(f"GSG HIGH MOVEMENT triggered on pi2", component="GSG")
+            elif op == "btn":
+                publish_kitchen_button_press(mqtt_publisher, device_id)
+                safe_print("Kitchen BTN simulated press", component="BTN")
+
+
             else:
                 safe_print(f"Unknown command: {cmd}", component="SYSTEM")
 
@@ -431,7 +467,8 @@ def run_pi_instance(pi_name, settings, args):
             stop_event,
             run_db,
             run_dl,
-            safe_print
+            safe_print,
+            run_kitchen_4sd
         )
         
         if "--sensors" in args:
@@ -462,18 +499,17 @@ def run_pi_instance(pi_name, settings, args):
                     run_dht(cfg, threads, stop_event,
                                     print_fn=lambda m, n=name: safe_print(m, component=n),
                                     mqtt_publisher=mqtt_publisher,device_id=device_id)
-                    
-                elif name == "DS1":
-                    safe_print(f"{name} {cfg}", component="DS1")
-                    run_ds1(cfg, threads, stop_event,  
-                            print_fn=lambda m, n=name: safe_print(m, component="DS1"),
-                            mqtt_publisher=mqtt_publisher, device_id=device_id)
-                    
-                elif name == "DS2":
-                    safe_print(f"{name} {cfg}", component="DS2")
-                    run_ds2(cfg, threads, stop_event,
-                            print_fn=lambda m: safe_print(m, component="DS2"),
-                            mqtt_publisher=mqtt_publisher, device_id=device_id)
+                elif name.startswith("DS"):
+                    safe_print(f"{name} {cfg}", component=name)
+                    run_ds(
+                        cfg,
+                        name,  
+                        threads,
+                        stop_event,
+                        print_fn=lambda m, n=name: safe_print(m, component=n),
+                        mqtt_publisher=mqtt_publisher,
+                        device_id=device_id
+                    )
                     
                 elif name == "BTN":
                     safe_print(f"{name} {cfg}", component="BTN")
@@ -483,9 +519,14 @@ def run_pi_instance(pi_name, settings, args):
                     
                 elif name == "4SD":
                     safe_print(f"{name} {cfg}", component="4SD")
-                    run_kitchen_4sd(cfg, threads, stop_event,
-                                    print_fn=lambda m: safe_print(m, component="4SD"), device_id=device_id)
-                    
+                    run_kitchen_4sd(
+                                    cfg,
+                                    threads,
+                                    stop_event,
+                                    print_fn=lambda m: safe_print(m, component="4SD"),
+                                    mqtt_publisher=mqtt_publisher,
+                                    device_id=device_id
+                                )
                 elif name == "GSG":
                     safe_print(f"{name} {cfg}", component="GSG")
                     run_kitchen_gsg(cfg, threads, stop_event,
