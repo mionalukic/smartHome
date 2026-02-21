@@ -23,14 +23,14 @@ public class KitchenTimerController {
     public ResponseEntity<?> setTime(@RequestBody Map<String,Integer> body) {
         Integer s = body.get("seconds");
         timer.setTime(s != null ? s : 0);
-        return ResponseEntity.ok("OK");
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     @PostMapping("/addN")
     public ResponseEntity<?> setAddN(@RequestBody Map<String,Integer> body) {
         Integer n = body.get("n");
         timer.setAddN(n != null ? n : 1);
-        return ResponseEntity.ok("OK");
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     @GetMapping("/status")

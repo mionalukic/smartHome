@@ -1,5 +1,5 @@
 from sensors.kitchen_4sd import Kitchen4SD
-
+import threading
 display_instance = None
 
 def run_kitchen_4sd(settings, threads, stop_event,
@@ -27,3 +27,17 @@ def run_kitchen_4sd(settings, threads, stop_event,
 
     t.start()
     threads.append(t)
+
+display_instance = None
+
+def handle_4sd_command(payload, print_fn=print):
+    global display_instance
+
+    if display_instance is None:
+        return
+
+    command = payload.get("command")
+    mmss = payload.get("mmss")
+    blink = payload.get("blink", False)
+
+    display_instance.update(mmss=mmss, blink=blink)

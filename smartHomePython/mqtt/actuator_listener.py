@@ -2,10 +2,11 @@ import json
 import threading
 import paho.mqtt.client as mqtt
 
+from components.kitchen_4sd import handle_4sd_command
 
 def start_actuator_listener(device_id, pi_settings, threads, stop_event,
                             run_db, run_dl, safe_print,
-                            display_instance=None):
+                            run_kitchen_4sd):
 
     def on_connect(client, userdata, flags, rc):
         topic = f"smarthome/{device_id}/actuators/#"
@@ -38,12 +39,11 @@ def start_actuator_listener(device_id, pi_settings, threads, stop_event,
                     print_fn=lambda m: safe_print(m, component="DL"),
                     state=state
                 )
-            elif topic.endswith("/actuators/4sd"):
-                payload = json.loads(msg.payload.decode())
-                safe_print(f"4SD COMMAND RECEIVED: {payload}", component="4SD")
-                if display_instance:
-                    display_instance.handle_command(payload)
 
+            elif topic.endswith("/actuators/4sd"):
+                safe_print(f"4SD COMMAND RECEIVED: {payload}", component="4SD")
+                handle_4sd_command(payload, print_fn=lambda m: safe_print(m, component="4SD"))
+                    
         except Exception as e:
             safe_print(f"Actuator error: {e}", component="SYSTEM")
 

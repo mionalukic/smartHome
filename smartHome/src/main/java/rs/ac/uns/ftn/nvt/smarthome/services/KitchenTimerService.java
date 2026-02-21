@@ -57,6 +57,7 @@ public class KitchenTimerService {
 
     private void pushDisplay(boolean blink) {
         String mmss = toMmss(store.getKitchenTimerSeconds());
+        System.out.println(mmss);
         String payload = String.format("{\"command\":\"display\",\"mmss\":\"%s\",\"blink\":%s}", mmss, blink);
         actuator.send("smarthome/pi2_kitchen_001/actuators/4sd", payload);
 
