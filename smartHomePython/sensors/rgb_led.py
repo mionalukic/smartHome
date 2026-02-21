@@ -76,17 +76,17 @@ class RGBLED(object):
         if self.mqtt_publisher and self.mqtt_publisher.connected:
             payload = {
                 "device_id": self.device_id,
-                "actuator_type": "rgb_led",
+                "sensor_type": "rgb_led",
                 "red_pin": self.red_pin,
                 "green_pin": self.green_pin,
                 "blue_pin": self.blue_pin,
-                "light_color": color,
-                "value": value,
+                "value": color,
+                "color_value": value,
                 "simulated": False,
                 "timestamp": time()
             }
 
-            topic = f"smarthome/{self.device_id}/actuators/rgb_led"
+            topic = f"smarthome/{self.device_id}/sensors/rgb_led"
             self.mqtt_publisher.publish(topic, payload, use_batch=True)
 
 

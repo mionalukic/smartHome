@@ -9,13 +9,14 @@ def run_ir_sensor_simulator(stop_event, print_fn=print, mqtt_publisher=None, dev
         sleep(random.uniform(3.0, 4.0))
 
         button = random.choice(BUTTONS)
-        print_fn(f"[IR_SIM] Simulated button: {button}")
+        print_fn(f"Simulated button: {button}")
 
         if mqtt_publisher and getattr(mqtt_publisher, "connected", False):
             payload = {
                 "device_id": device_id,
-                "sensor_type": "ir_sensor",
-                "button": button,
+                "sensor_type": "ir",
+                "component": "IR",
+                "value": int(button),
                 "hex_code": "0xSIMULATED",
                 "simulated": True,
                 "timestamp": time()
@@ -23,3 +24,5 @@ def run_ir_sensor_simulator(stop_event, print_fn=print, mqtt_publisher=None, dev
 
             topic = f"smarthome/{device_id}/sensors/ir"
             mqtt_publisher.publish(topic, payload, use_batch=True)
+    print_fn(f"IR sensor simulator stopped for device {device_id}")
+    

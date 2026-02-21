@@ -74,7 +74,7 @@ public class InfluxWriter {
                 }
                 break;
 
-            case "kitchen_dht":
+            case "dht":
 
                 if (event.getTemperature() != null) {
                     point.addField("temperature",
@@ -122,6 +122,8 @@ public class InfluxWriter {
                 if (event.getValue() instanceof Number) {
                     point.addField("value",
                             ((Number) event.getValue()).doubleValue());
+                } else if (event.getValue() instanceof String) {
+                    point.addField("value", event.getValue().toString());
                 }
         }
 

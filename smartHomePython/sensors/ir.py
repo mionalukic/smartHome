@@ -38,9 +38,10 @@ class IRSensor:
         if self.mqtt_publisher and self.mqtt_publisher.connected:
             payload = {
                 "device_id": self.device_id,
-                "sensor_type": "ir_sensor",
+                "sensor_type": "ir",
+                "component": "IR",
                 "pin": self.pin,
-                "button": button_name,
+                "value": int(button_name),
                 "hex_code": hex_value,
                 "simulated": False,
                 "timestamp": time()
@@ -105,8 +106,8 @@ def run_ir_loop(ir, stop_event, print_fn=print, mqtt_publisher=None, device_id=N
             for i in range(len(ir.BUTTONS)):
                 if hex(ir.BUTTONS[i]) == in_data:
                     button_name = ir.BUTTON_NAMES[i]
-                    ir.print_fn(f"[IR] Button pressed: {button_name}")
+                    ir.print_fn(f"Button pressed: {button_name}")
                     ir._publish(button_name, in_data)
 
         except Exception as e:
-            ir.print_fn(f"[IR] Error: {e}")
+            ir.print_fn(f"Error: {e}")

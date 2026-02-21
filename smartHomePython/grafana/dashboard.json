@@ -105,7 +105,7 @@
       "pluginVersion": "12.3.2",
       "targets": [
         {
-          "query": "from(bucket: \"smarthome\")\r\n  |> range(start: -30m)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"door_buzzer\" and\r\n    r._field == \"value\"\r\n  )\r\n",
+          "query": "from(bucket: \"smartHome\")\r\n  |> range(start: -30m)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"door_buzzer\" and\r\n    r._field == \"value\"\r\n  )\r\n",
           "refId": "A"
         }
       ],
