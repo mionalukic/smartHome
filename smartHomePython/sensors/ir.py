@@ -38,7 +38,7 @@ class IRSensor:
         if self.mqtt_publisher and self.mqtt_publisher.connected:
             payload = {
                 "device_id": self.device_id,
-                "sensor_type": "ir_sensor",
+                "sensor_type": "ir",
                 "component": "IR",
                 "pin": self.pin,
                 "value": int(button_name),
