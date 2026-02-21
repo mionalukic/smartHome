@@ -1,8 +1,8 @@
 import threading
-from simulators.kitchen_dht import run_kitchen_dht_simulator
+from simulators.dht import run_dht_simulator
 
 
-def run_kitchen_dht(settings, threads, stop_event,
+def run_dht(settings, threads, stop_event,
                     print_fn=print, mqtt_publisher=None,device_id="unknown"):
 
     device_id = device_id if device_id else settings.get("device_id", "pi")
@@ -11,13 +11,13 @@ def run_kitchen_dht(settings, threads, stop_event,
 
     if settings.get("simulated", True):
         t = threading.Thread(
-            target=run_kitchen_dht_simulator,
+            target=run_dht_simulator,
             args=(stop_event, print_fn, mqtt_publisher, device_id, component, interval)
         )
     else:
-        from sensors.kitchen_dht import run_kitchen_dht
+        from sensors.dht import run_dht
         t = threading.Thread(
-            target=run_kitchen_dht,
+            target=run_dht,
             args=(
                 settings["pin"],
                 stop_event,

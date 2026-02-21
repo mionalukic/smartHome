@@ -35,23 +35,21 @@ class DMS:
         # columns -> input with pull-down
         for col in self.cols:
             GPIO.setup(col, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-    def scan_key(self):
-
-        for row_index, row_pin in enumerate(self.rows):
-
-            GPIO.output(row_pin, GPIO.LOW)
-
-            for col_index, col_pin in enumerate(self.cols):
-
-                if GPIO.input(col_pin) == GPIO.HIGH:
-                    key = self.KEY_MAP[row_index][col_index]
-                    GPIO.output(row_pin, GPIO.HIGH)
-                    return key
-
-            GPIO.output(row_pin, GPIO.HIGH)
-
-        return None
+    def readLine(self, line, characters):
+        GPIO.output(line, GPIO.HIGH)
+        if(GPIO.input(self.cols[0]) == 1):
+            self.print_fn(f"Key pressed: {characters[0]}")
+            self.publish_key(characters[0])
+        if(GPIO.input(self.cols[1]) == 1):
+            self.print_fn(f"Key pressed: {characters[1]}")
+            self.publish_key(characters[1])
+        if(GPIO.input(self.cols[2]) == 1):
+            self.print_fn(f"Key pressed: {characters[2]}")
+            self.publish_key(characters[2])
+        if(GPIO.input(self.cols[3]) == 1):
+            self.print_fn(f"Key pressed: {characters[3]}")
+            self.publish_key(characters[3])
+        GPIO.output(line, GPIO.LOW)
 
     def publish_key(self, key):
 
@@ -70,29 +68,24 @@ class DMS:
         }
 
         self.mqtt_publisher.publish(topic, data, use_batch=True)
-
 def run_dms_loop(dms, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
 
     dms.setup(print_fn, mqtt_publisher, device_id)
 
     print_fn("DMS matrix scanning started")
 
-    last_key = None
+    try:
+        while not stop_event.is_set():
+            dms.readLine(dms.rows[0], ["1","2","3","A"])
+            dms.readLine(dms.rows[1], ["4","5","6","B"])
+            dms.readLine(dms.rows[2], ["7","8","9","C"])
+            dms.readLine(dms.rows[3], ["*","0","#","D"])
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        print("\nApplication stopped!")
+    finally:
+        GPIO.cleanup()
+        print_fn("DMS stopped")
 
-    while not stop_event.is_set():
 
-        key = dms.scan_key()
 
-        if key and key != last_key:
-            print_fn(f"Key pressed: {key}")
-            dms.publish_key(key)
-            last_key = key
-            time.sleep(0.3)  # debounce
-
-        if not key:
-            last_key = None
-
-        time.sleep(0.05)
-
-    GPIO.cleanup()
-    print_fn("DMS stopped")
