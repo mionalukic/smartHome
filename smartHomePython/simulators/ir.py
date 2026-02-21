@@ -15,7 +15,8 @@ def run_ir_sensor_simulator(stop_event, print_fn=print, mqtt_publisher=None, dev
             payload = {
                 "device_id": device_id,
                 "sensor_type": "ir_sensor",
-                "button": button,
+                "component": "IR",
+                "value": int(button),
                 "hex_code": "0xSIMULATED",
                 "simulated": True,
                 "timestamp": time()
