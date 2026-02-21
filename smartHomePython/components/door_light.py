@@ -37,7 +37,7 @@ def run_dl(settings, threads, stop_event, print_fn=print, mqtt_publisher=None):
         dl = DL(settings['pin'])
         dl_thread = threading.Thread(
             target=run_dl_loop,
-            args=(dl, stop_event, print_fn, mqtt_publisher, settings.get('device_id', 'pi1'), get_dl_state)
+            args=(dl, stop_event, print_fn, mqtt_publisher, settings.get('device_id', 'pi1'), get_dl_state, turn_off, do_change)
         )
         dl_thread.start()
         threads.append(dl_thread)
