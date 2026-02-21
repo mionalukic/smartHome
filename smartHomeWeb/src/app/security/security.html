@@ -1,0 +1,37 @@
+<div class="security-wrapper">
+
+  <div class="status-card">
+
+    <h2>Security System</h2>
+
+    <div class="mode-display"
+         [class.alarm]="mode==='ALARM'"
+         [class.armed]="mode==='ARMED'">
+      {{ mode }}
+    </div>
+
+    <div *ngIf="mode==='ALARM'" class="alarm-info">
+      <strong>Alarm Triggered</strong>
+      <p>Reason: {{ reason }}</p>
+      <p>Source: {{ source }}</p>
+    </div>
+
+  </div>
+
+  <div class="control-card">
+
+    <h3>Enter PIN</h3>
+
+    <input type="password"
+           [(ngModel)]="pin"
+           placeholder="••••">
+
+    <button (click)="submitPin()">Confirm</button>
+
+    <div class="pin-status">
+      {{ pinResult }}
+    </div>
+
+  </div>
+
+</div>

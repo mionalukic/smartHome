@@ -1,0 +1,13 @@
+import { Routes } from '@angular/router';
+import { ShellComponent } from './layout/shell/shell';
+import { DashboardComponent } from './pages/dashboard/dashboard';
+import {SecurityComponent} from './security/security';
+
+export const routes: Routes = [
+  {
+    path: '',
+    component: ShellComponent,
+    children: [ {
+      path :'security', component : SecurityComponent}]
+  }
+];

@@ -20,6 +20,7 @@ public class SecurityStateService {
     private final AlarmNotifier alarmNotifier; // web obaveštenje (stub za sada)
     private final ScheduledExecutorService scheduler =
             Executors.newSingleThreadScheduledExecutor();
+    private final PinService pinService;
     public boolean isArmed() {
         return stateStore.isArmed();
     }
@@ -30,14 +31,40 @@ public class SecurityStateService {
         return stateStore.isDisarmed();
     }
 
+    public synchronized PinResult submitPin(String key) {
+        return pinService.pushKey(key);
+    }
+    public synchronized PinResult processPinForModeChange(String key) {
+
+        PinResult result = pinService.pushKey(key);
+
+        if (result == PinResult.OK) {
+
+            if (stateStore.isAlarm()) {
+                deactivateAlarm(DisarmMethod.WEB);
+                stateStore.setMode(SecurityMode.DISARMED);
+            }
+            else if (stateStore.isDisarmed()) {
+                arm(DisarmMethod.WEB);
+            }
+            else if (stateStore.isArmed()) {
+                disarm(DisarmMethod.WEB);
+            }
+        }
+
+        return result;
+    }
+
     public SecurityStateService(SystemStateStore stateStore,
                                 InfluxWriter influxWriter,
                                 ActuatorCommandService actuator,
-                                AlarmNotifier alarmNotifier) {
+                                AlarmNotifier alarmNotifier,
+                                PinService pinService) {
         this.stateStore = stateStore;
         this.influxWriter = influxWriter;
         this.actuator = actuator;
         this.alarmNotifier = alarmNotifier;
+        this.pinService = pinService;
     }
 
     public synchronized void arm(DisarmMethod method) {
@@ -75,6 +102,8 @@ public class SecurityStateService {
         if (stateStore.isAlarm()) return;
 
         stateStore.setMode(SecurityMode.ALARM);
+        stateStore.setLastAlarmReason(reason.name());
+        stateStore.setLastAlarmSource(sourceComponent);
         writeSecurityEvent("alarm_on", reason.name(), sourceComponent);
         stateStore.clearDoorOpen(sourceComponent);
 
@@ -87,6 +116,8 @@ public class SecurityStateService {
         if (!stateStore.isAlarm()) return;
 
         stateStore.setMode(SecurityMode.ARMED);
+        stateStore.setLastAlarmReason(null);
+        stateStore.setLastAlarmSource(null);
         writeSecurityEvent("alarm_off", method.name(), null);
 
         actuator.send("smarthome/pi1_door_001/actuators/door_buzzer", "{\"command\":\"off\"}");

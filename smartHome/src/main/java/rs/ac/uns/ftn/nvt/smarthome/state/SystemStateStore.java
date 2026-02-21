@@ -23,7 +23,8 @@ public class SystemStateStore {
     @Getter @Setter private int kitchenAddSecondsN = 10; // default
     @Getter @Setter private boolean kitchenBlinking = false;
     @Getter @Setter private long kitchenLastTickMs = System.currentTimeMillis();
-
+    @Getter @Setter private String lastAlarmReason;
+    @Getter @Setter private String lastAlarmSource;
 
     @Getter @Setter
     private int peopleCount = 0;
