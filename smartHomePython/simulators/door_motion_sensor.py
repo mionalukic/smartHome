@@ -2,6 +2,7 @@ import time
 import random
 
 from components.door_light import turn_on
+from components.door_ultrasonic_sensor import is_entering
 
 
 def run_dpir_simulator(stop_event, print_fn=print,
@@ -11,7 +12,7 @@ def run_dpir_simulator(stop_event, print_fn=print,
     print_fn(f"{component} simulator started")
 
     while not stop_event.is_set():
-        duration = random.randint(3, 5)
+        duration = random.randint(5, 10)
         time.sleep(5)
         ts = time.time()
         print_fn(f"{component} Detected movement")
@@ -24,9 +25,10 @@ def run_dpir_simulator(stop_event, print_fn=print,
                 "state": "detected",
                 "value": 1,
                 "simulated": True,
-                "timestamp": ts
+                "timestamp": ts,
+                "is_entering": is_entering(device_id)
             }
-
+            print_fn(is_entering(device_id))
             topic = f"smarthome/{device_id}/sensors/{component.lower()}"
             mqtt_publisher.publish(topic, payload, use_batch=True)
 
