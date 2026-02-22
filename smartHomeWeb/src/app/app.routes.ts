@@ -13,6 +13,7 @@ export const routes: Routes = [
       {path :'security', component : SecurityComponent},
       {path: 'timer', component: KitchenTimerComponent},
       {path: 'camera', component: CameraComponent},
+      {path: 'dashboard', component: DashboardComponent}
     ]
   }
 ];

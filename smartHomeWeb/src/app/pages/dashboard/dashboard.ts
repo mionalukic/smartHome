@@ -4,6 +4,7 @@ import {SecurityService} from '../../services/security';
 import {MatCard, MatCardContent, MatCardTitle} from '@angular/material/card';
 import {MatButton} from '@angular/material/button';
 import {NgIf} from '@angular/common';
+import { interval } from 'rxjs';
 
 
 @Component({
@@ -17,7 +18,7 @@ import {NgIf} from '@angular/common';
     MatButton,
     NgIf
   ],
-  styleUrl: 'dashboard.css'
+  styleUrls: ['dashboard.css']
 })
 export class DashboardComponent implements OnInit {
   mode: 'DISARMED' | 'ARMED' | 'ALARM' | string = '';
@@ -28,15 +29,14 @@ export class DashboardComponent implements OnInit {
     private security: SecurityService,
     sanitizer: DomSanitizer
   ) {
-    // ubaci ovde tvoj grafana link (kasnije)
-    const grafanaUrl = 'http://localhost:3000/d/XXXX/dashboard?orgId=1&kiosk';
+    const grafanaUrl = 'http://localhost:3000/public-dashboards/e555e5477ebe431d87334a69ed8a2652?orgId=1&kiosk';
     this.grafanaUrlSafe = sanitizer.bypassSecurityTrustResourceUrl(grafanaUrl);
   }
 
   ngOnInit() {
-    this.refresh();
-    setInterval(() => this.refresh(), 1500); // kasnije SSE/WebSocket, za sada polling
+    interval(1500).subscribe(() => this.refresh());
   }
+
 
   refresh() {
     this.security.getStatus().subscribe({
