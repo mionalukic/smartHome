@@ -28,7 +28,6 @@ def run_dpir_simulator(stop_event, print_fn=print,
                 "timestamp": ts,
                 "is_entering": is_entering(device_id)
             }
-            print_fn(is_entering(device_id))
             topic = f"smarthome/{device_id}/sensors/{component.lower()}"
             mqtt_publisher.publish(topic, payload, use_batch=True)
 
