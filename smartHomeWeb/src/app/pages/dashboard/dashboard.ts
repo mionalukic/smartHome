@@ -40,7 +40,7 @@ export class DashboardComponent implements OnInit {
 
   refresh() {
     this.security.getStatus().subscribe({
-      next: (m) => this.mode = m,
+      next: (m) => this.mode = m.mode,
       error: () => this.mode = 'UNKNOWN'
     });
   }
