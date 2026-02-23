@@ -59,7 +59,6 @@ class DS1(object):
             
             topic = f"smarthome/{self.device_id}/sensors/{self.component.lower()}"
             self.mqtt_publisher.publish(topic, data, use_batch=True)
-            self.print_fn('published')
 
 def run_ds1_button(pin, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1', component='DS1'):
  

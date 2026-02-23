@@ -16,7 +16,7 @@ type SourceType = 'laptop' | 'rpi';
 })
 export class CameraComponent implements OnDestroy {
   // --- RPi stream (replace IP_PI) ---
-  baseStreamUrl = 'http://IP_PI:8080/?action=stream';
+  baseStreamUrl = 'http://192.168.107.147:8080/?action=stream';
   streamUrl = this.baseStreamUrl;
 
   // --- UI state ---
