@@ -113,7 +113,7 @@ public class InfluxWriter {
                 if (event.getValue() != null) {
                     point.addField("detail", event.getValue().toString());
                 }
-                point.addField("state", event.getState() != null ? event.getState() : "unknown");
+                point.addTag("state", event.getState() != null ? event.getState() : "unknown");
                 break;
 
 
