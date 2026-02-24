@@ -170,6 +170,11 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                 mqtt_publisher=mqtt_publisher
             )
         actuator_registry.add("DB")
+    # run_db(settings.get("PI1").get("DB"), threads, stop_event,
+    #             print_fn=lambda m: safe_print(m, component="DB"),
+    #             mqtt_publisher=mqtt_publisher
+    #         )
+    # actuator_registry.add("DB")
     while not stop_event.is_set():
         try:
             cmd = input("> ").strip()
