@@ -21,7 +21,6 @@ def turn_off():
     DL_STATE = False
 
 def run_dl(settings, threads, stop_event, print_fn=print, mqtt_publisher=None):
-    global DL_STATE
 
     if settings.get('simulated', True):
         dl_thread = threading.Thread(

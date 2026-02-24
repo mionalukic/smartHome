@@ -30,7 +30,8 @@ class DB(object):
                 "component": "DB",
                 "pitch": pitch,
                 "duration": duration,
-                "timestamp": time.time()
+                "timestamp": time.time(),
+                "simulated": False
             }
             
             topic = f"smarthome/{self.device_id}/sensors/db"
@@ -42,16 +43,16 @@ class DB(object):
             GPIO.output(self.pin, GPIO.LOW)
             time.sleep(delay)
 
-def run_db_loop(db, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
+def run_db_loop(db, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1', get_DB_state=None):
    
+    print_fn("DB sensor started")
     db.setup(print_fn, mqtt_publisher, device_id)
-    
-    print_fn("DB ready for buzzing")
-    
+        
     while not stop_event.is_set():
-        time.sleep(10)
-        if stop_event.is_set():
-            break
+        time.sleep(1)
+        state = get_DB_state()
+        if state is None or not state:
+            continue
         db.buzz(440, 0.2)  
     
     print_fn("DB loop stopped")

@@ -1,5 +1,6 @@
 import json
 import threading
+from components.door_buzzer import buzz_off, buzz_on
 import paho.mqtt.client as mqtt
 
 from components.kitchen_4sd import handle_4sd_command
@@ -26,14 +27,8 @@ def start_actuator_listener(device_id, pi_settings, threads, stop_event,
             safe_print(f"ACTUATOR COMMAND -> {topic} | {payload}", component="MQTT")
 
             if "door_buzzer" in topic:
-                state = payload.get("command") == "on"
-                run_db(
-                    pi_settings.get("DB", {}),
-                    threads,
-                    stop_event,
-                    print_fn=lambda m: safe_print(m, component="DB"),
-                    state=state
-                )
+                if payload.get("command") == "on": buzz_on() 
+                else: buzz_off()
 
             elif "door_light" in topic:
                 state = payload.get("command") == "on"

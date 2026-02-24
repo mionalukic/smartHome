@@ -5,7 +5,7 @@ import time
 import sys
 
 from settings import load_settings
-from components.door_buzzer import run_db
+from components.door_buzzer import buzz_off, buzz_on, run_db
 from components.door_motion_sensor import run_dpir
 from components.door_membrane_switch import run_dms
 from components.door_sensor import run_ds, publish_door_event
@@ -159,13 +159,17 @@ def format_help():
 def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher=None, device_id=None, settings=None):
     safe_print("Console ready. Type 'help' for commands.", component="SYSTEM")
 
-    db_settings = pi_settings.get("DB", {})
     if device_id.startswith("pi1"):
         run_dl(pi_settings.get("DL", {}), threads, stop_event,
                             print_fn=lambda m: safe_print(m, component="DL"),
                             mqtt_publisher=mqtt_publisher
                         )
         actuator_registry.add("DL")
+        run_db(pi_settings.get("DB"), threads, stop_event,
+                print_fn=lambda m: safe_print(m, component="DB"),
+                mqtt_publisher=mqtt_publisher
+            )
+        actuator_registry.add("DB")
     while not stop_event.is_set():
         try:
             cmd = input("> ").strip()
@@ -211,9 +215,10 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
             elif op == "all":
                 if pi_settings.get("device").get("device_id") == "pi1_door_001":
                     if "DB" not in actuator_registry:
+                        buzz_off()
                         run_db(pi_settings.get("DB"), threads, stop_event,
                                 print_fn=lambda m: safe_print(m, component="DB"),
-                                mqtt_publisher=mqtt_publisher, state='on'
+                                mqtt_publisher=mqtt_publisher
                             )
                         actuator_registry.add("DB")
                     if "DL" not in actuator_registry:
@@ -239,11 +244,11 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
 
             elif op == "buzz":
                 sub = parts[1].lower() if len(parts) > 1 else ""
-                safe_print(f"Buzz command: {sub}", component="SYSTEM")
+                db_settings = pi_settings.get("DB", {})
+
                 if sub == "on":
-                    if "DB" in actuator_registry:
-                        safe_print("DB is already turned on", component="SYSTEM")
-                    else:
+                    buzz_on()
+                    if "DB" not in actuator_registry:
                         run_db(db_settings, threads, stop_event,
                             print_fn=lambda m: safe_print(m, component="DB"),
                             mqtt_publisher=mqtt_publisher, state=True
@@ -251,12 +256,8 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                         actuator_registry.add("DB")
 
                 elif sub == "off":
-                    if "DB" in actuator_registry:
-                        safe_print("DB turned off", component="DB")
-                        actuator_registry.discard("DB")
-                    else:
-                        safe_print("DB is already turned off", component="SYSTEM")
-
+                    buzz_off()
+                    safe_print("DB turned off", component="DB")
                 else:
                     safe_print("Usage: buzz on | buzz off", component="SYSTEM")
 
