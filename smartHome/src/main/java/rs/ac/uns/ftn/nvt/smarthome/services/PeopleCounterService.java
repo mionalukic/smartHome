@@ -13,12 +13,16 @@ public class PeopleCounterService {
     private int bedroomCounter = 0;
     private int kitchenCounter = 0;
 
-    public void enter(String deviceId){
-        if (deviceId.startsWith("pi1"))
+    public int enter(String deviceId) {
+        if (deviceId.startsWith("pi1")){
             bedroomCounter++;
+            return bedroomCounter;
+        }
         else if (deviceId.startsWith("pi2")) {
             kitchenCounter++;
+            return kitchenCounter;
         }
+        return -1;
     }
 
     public void exit(String deviceId){
