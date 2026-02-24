@@ -5,6 +5,7 @@ import {MatCard, MatCardContent, MatCardTitle} from '@angular/material/card';
 import {MatButton} from '@angular/material/button';
 import {NgIf} from '@angular/common';
 import { interval } from 'rxjs';
+import { PeopleCounterService } from '../../services/people-counter.service';
 
 
 @Component({
@@ -21,13 +22,15 @@ import { interval } from 'rxjs';
   styleUrls: ['dashboard.css']
 })
 export class DashboardComponent implements OnInit {
+
   mode: 'DISARMED' | 'ARMED' | 'ALARM' | string = '';
   lastMessage = '';
   grafanaUrlSafe: SafeResourceUrl;
 
   constructor(
     private security: SecurityService,
-    sanitizer: DomSanitizer
+    sanitizer: DomSanitizer,
+    private peopleCounterService: PeopleCounterService
   ) {
     const grafanaUrl = 'http://localhost:3000/public-dashboards/e555e5477ebe431d87334a69ed8a2652?orgId=1&kiosk';
     this.grafanaUrlSafe = sanitizer.bypassSecurityTrustResourceUrl(grafanaUrl);
@@ -53,5 +56,12 @@ export class DashboardComponent implements OnInit {
   }
   alarmOff() {
     this.security.alarmOff().subscribe(() => this.lastMessage = 'ALARM OFF command sent');
+  }
+  emptyKitchen() {
+    console.log('prosao3')
+    this.peopleCounterService.emptyRoom('kitchen').subscribe()
+  }
+  emptyBedroom() {
+    this.peopleCounterService.emptyRoom('bedroom').subscribe()
   }
 }
