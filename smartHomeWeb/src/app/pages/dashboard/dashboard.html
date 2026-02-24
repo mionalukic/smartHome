@@ -36,6 +36,27 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- RGB COLOR -->
+  <mat-card class="card">
+    <mat-card-title>RGB LED COLOR</mat-card-title>
+    <mat-card-content>
+      <div class="row">
+        <div class="label">Choose color</div>
+      </div>
+
+      <div class="actions">
+        <button mat-stroked-button (click)="changeColor('white')">WHITE</button>
+        <button mat-stroked-button (click)="changeColor('red')">RED</button>
+        <button mat-stroked-button (click)="changeColor('blue')">BLUE</button>
+        <button mat-stroked-button (click)="changeColor('green')">GREEN</button>
+        <button mat-stroked-button (click)="changeColor('yellow')">YELLOW</button>
+        <button mat-stroked-button (click)="changeColor('purple')">PURPLE</button>
+        <button mat-stroked-button (click)="changeColor('light_blue')">LIGHT_BLUE</button>
+        <button mat-stroked-button (click)="changeColor('off')">TURN OFF</button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
   <mat-card class="card wide">
     <mat-card-title>Grafana</mat-card-title>
     <mat-card-content>

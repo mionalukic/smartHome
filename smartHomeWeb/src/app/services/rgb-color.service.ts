@@ -5,13 +5,13 @@ import { Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class PeopleCounterService {
+export class RgbColorService {
 
-  private baseUrl = 'http://localhost:8080/api/people';
+  private baseUrl = 'http://localhost:8080/api/rgb';
 
   constructor(private http: HttpClient) {}
 
-  emptyRoom(room: string): Observable<Object> {
-    return this.http.get(`${this.baseUrl}/${room}/exit-all`);
+  changeColor(color: string): Observable<Object> {
+    return this.http.post(`${this.baseUrl}/${color}`, {});
   }
 }

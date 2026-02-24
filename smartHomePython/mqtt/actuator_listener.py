@@ -1,6 +1,7 @@
 import json
 import threading
 from components.door_buzzer import buzz_off, buzz_on
+from components.rgb_led import change_color
 import paho.mqtt.client as mqtt
 
 from components.kitchen_4sd import handle_4sd_command
@@ -15,8 +16,7 @@ def start_actuator_listener(device_id, pi_settings, threads, stop_event,
         client.subscribe(topic)
 
     def on_message(client, userdata, msg):
-        if "rgb_led" in msg.topic:
-            return
+        
         if "lcd_display" in msg.topic:
             return
         # safe_print(f"Received MQTT message on topic {msg.topic}", component="MQTT")
@@ -43,6 +43,9 @@ def start_actuator_listener(device_id, pi_settings, threads, stop_event,
             elif topic.endswith("/actuators/4sd"):
                 safe_print(f"4SD COMMAND RECEIVED: {payload}", component="4SD")
                 handle_4sd_command(payload, print_fn=lambda m: safe_print(m, component="4SD"))
+
+            elif "rgb" in msg.topic:
+                change_color(payload.get("value"))
                     
         except Exception as e:
             safe_print(f"Actuator error: {e}", component="SYSTEM")
