@@ -4,5 +4,6 @@ public enum AlarmReason {
     DOOR_OPEN_TOO_LONG,
     MOTION_DETECTED,
     MANUAL_TRIGGER,
-    INVALID_PIN
+    INVALID_PIN,
+    UNEXPECTED_ENTRANCE
 }
