@@ -1,35 +1,58 @@
 package rs.ac.uns.ftn.nvt.smarthome.services;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.stereotype.Service;
+import rs.ac.uns.ftn.nvt.smarthome.state.AlarmReason;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
-@Getter
-@Setter
 public class PeopleCounterService {
-    private int bedroomCounter = 0;
-    private int kitchenCounter = 0;
 
-    public int enter(String deviceId) {
-        if (deviceId.startsWith("pi1")){
-            bedroomCounter++;
-            return bedroomCounter;
+    private final AtomicInteger peopleCounter = new AtomicInteger(0);
+    private final SecurityStateService securityStateService;
+
+    public void enter(String component) {
+        int value = peopleCounter.incrementAndGet();
+
+        if (value == 1) {
+            securityStateService.triggerAlarm(
+                    AlarmReason.UNEXPECTED_ENTRANCE,
+                    component
+            );
         }
-        else if (deviceId.startsWith("pi2")) {
-            kitchenCounter++;
-            return kitchenCounter;
-        }
-        return -1;
+
+        System.out.println("PEOPLE COUNTER: " + value);
     }
 
-    public void exit(String deviceId){
-        if (deviceId.startsWith("pi1"))
-            bedroomCounter--;
-        else if (deviceId.startsWith("pi2")) {
-            kitchenCounter--;
+    public void exit() {
+        while (true) {
+            int current = peopleCounter.get();
+
+            if (current == 0) {
+                System.out.println("ERROR - Ghost exited the room");
+                return;
+            }
+
+            if (peopleCounter.compareAndSet(current, current - 1)) {
+                System.out.println("Person exited the room");
+                System.out.println("PEOPLE COUNTER: " + (current - 1));
+                return;
+            }
         }
+    }
+
+    public void reset() {
+        peopleCounter.set(0);
+        System.out.println("PEOPLE COUNTER RESET TO 0");
+    }
+
+    public void detectMovement() {
+        if (peopleCounter.get() == 0)
+            securityStateService.triggerAlarm(
+                    AlarmReason.UNEXPECTED_ENTRANCE,
+                    "DPIR3"
+            );
     }
 }

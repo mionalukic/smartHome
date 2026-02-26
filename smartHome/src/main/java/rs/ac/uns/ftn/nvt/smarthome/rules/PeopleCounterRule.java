@@ -14,32 +14,22 @@ public class PeopleCounterRule implements SensorRule {
 
     @Autowired
     private PeopleCounterService service;
-    @Autowired
-    private SystemStateStore systemStateStore;
-    @Autowired
-    private SecurityStateService securityStateService;
 
     @Override
     public void onEvent(SensorEvent e) {
 
         if (!e.getComponent().startsWith("DPIR")) return;
-
+        if (e.getComponent().equals("DPIR3")) {
+            service.detectMovement();
+            return;
+        }
         Boolean isEntering = e.getIs_entering();
         if (isEntering == null) return;
         if (isEntering) {
             System.out.println("Person entered the room");
-            int personCounter = service.enter(e.getDevice_id());
-            if (personCounter == -1) return;
-            if(personCounter == 1) securityStateService.triggerAlarm(AlarmReason.UNEXPECTED_ENTRANCE, e.getComponent());
+            service.enter(e.getComponent());
         } else {
-            int currentState = e.getComponent().equals("DPIR1") ? service.getBedroomCounter() : service.getKitchenCounter();
-            if (currentState == 0) {
-                System.out.println("ERROR - Ghost exited the room");
-                return;
-            }
-            service.exit(e.getDevice_id());
-            System.out.println("Person exited the room");
+            service.exit();
         }
-        System.out.println("PEOPLE COUNTER: " + service.getBedroomCounter());
     }
 }

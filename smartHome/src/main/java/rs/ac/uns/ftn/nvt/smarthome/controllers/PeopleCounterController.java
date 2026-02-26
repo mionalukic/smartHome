@@ -22,13 +22,9 @@ public class PeopleCounterController {
         this.peopleCounterService = peopleCounterService;
     }
 
-    @GetMapping("/{room}/exit-all")
-    public ResponseEntity<?> exitAll(@PathVariable String room) {
-        if (Objects.equals(room, "bedroom"))
-            peopleCounterService.setBedroomCounter(0);
-        else
-            peopleCounterService.setKitchenCounter(0);
-
+    @PostMapping("/exit-all")
+    public ResponseEntity<?> exitAll() {
+        peopleCounterService.reset();
         return ResponseEntity.ok("Room emptied");
     }
 }
