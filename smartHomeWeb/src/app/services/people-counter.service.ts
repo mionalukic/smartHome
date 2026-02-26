@@ -11,7 +11,7 @@ export class PeopleCounterService {
 
   constructor(private http: HttpClient) {}
 
-  emptyRoom(room: string): Observable<Object> {
-    return this.http.get(`${this.baseUrl}/${room}/exit-all`);
+  emptyRoom(): Observable<Object> {
+    return this.http.post(`${this.baseUrl}/exit-all`, {});
   }
 }

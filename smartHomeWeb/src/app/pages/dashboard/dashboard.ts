@@ -59,11 +59,8 @@ export class DashboardComponent implements OnInit {
   alarmOff() {
     this.security.alarmOff().subscribe(() => this.lastMessage = 'ALARM OFF command sent');
   }
-  emptyKitchen() {
-    this.peopleCounterService.emptyRoom('kitchen').subscribe()
-  }
-  emptyBedroom() {
-    this.peopleCounterService.emptyRoom('bedroom').subscribe()
+  emptyRoom() {
+    this.peopleCounterService.emptyRoom().subscribe()
   }
   changeColor(color: string) {
     this.rgbColorService.changeColor(color).subscribe()
