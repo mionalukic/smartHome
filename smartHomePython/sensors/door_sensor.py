@@ -60,13 +60,13 @@ class DS1(object):
             topic = f"smarthome/{self.device_id}/sensors/{self.component.lower()}"
             self.mqtt_publisher.publish(topic, data, use_batch=True)
 
-def run_ds1_button(pin, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
+def run_ds1_button(pin, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1', component='DS1'):
  
     if GPIO is None:
         print_fn("GPIO not available, cannot run real door sensor")
         return
     
-    ds1 = DS1(pin)
+    ds1 = DS1(pin, component)
     ds1.setup(print_fn, mqtt_publisher, device_id)
     
     print_fn("Door sensor (REAL) started")

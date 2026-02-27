@@ -1,22 +1,57 @@
 <mat-card class="camera-card">
   <div class="camera-header">
     <h2>Security Camera</h2>
-    <button mat-button (click)="reload()">Reload</button>
+  </div>
+  <div style="display:flex; gap:12px; align-items:baseline; flex-wrap:wrap;">
+
+    <mat-form-field appearance="outline">
+      <mat-select
+        placeholder="Source"
+        [value]="source"
+        (valueChange)="onSourceChange($event)">
+        <mat-option value="laptop">Laptop Webcam</mat-option>
+        <mat-option value="rpi">Raspberry Pi Stream</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary"
+            *ngIf="source==='laptop'"
+            (click)="startLaptopCamera()">
+      Start Webcam
+    </button>
+
+    <button mat-stroked-button
+            *ngIf="source==='rpi'"
+            (click)="reloadRpi()">
+      Reload RPi Stream
+    </button>
+
+    <div style="margin-left:auto;">
+      <strong>FPS:</strong> {{ fps }}
+      <span *ngIf="isOffline" style="color:#c62828; margin-left:8px;">Offline</span>
+    </div>
   </div>
 
-  <div class="status">
-    <span class="pill" [class.off]="isOffline">
-      {{ isOffline ? 'OFFLINE' : 'LIVE' }}
-    </span>
-    <span class="meta">FPS: {{ fps }}</span>
-  </div>
+  <div class="camera-frame" [ngSwitch]="source">
+    <div *ngSwitchCase="'laptop'">
+      <video
+        #videoEl
+        autoplay
+        playsinline
+        muted
+        style="width:100%; height:auto; background:#000;"
+        (loadeddata)="onVideoLoadedData()">
+      </video>
+    </div>
 
-  <div class="camera-frame" *ngIf="connected">
-    <img
-      [src]="streamUrl"
-      (load)="onLoad()"
-      (error)="onError()"
-      alt="Live stream"
-    />
+    <div class="camera-frame" *ngSwitchCase="'rpi'">
+      <img
+        *ngIf="connected"
+        [src]="streamUrl"
+        (load)="onImageLoad()"
+        (error)="onImageError()"
+        style="width:100%; height:auto; background:#000; object-fit:contain;"
+        alt="RPi stream" />
+    </div>
   </div>
 </mat-card>

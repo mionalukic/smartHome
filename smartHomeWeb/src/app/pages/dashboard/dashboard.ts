@@ -4,6 +4,9 @@ import {SecurityService} from '../../services/security';
 import {MatCard, MatCardContent, MatCardTitle} from '@angular/material/card';
 import {MatButton} from '@angular/material/button';
 import {NgIf} from '@angular/common';
+import { interval } from 'rxjs';
+import { PeopleCounterService } from '../../services/people-counter.service';
+import { RgbColorService } from '../../services/rgb-color.service';
 
 
 @Component({
@@ -17,30 +20,32 @@ import {NgIf} from '@angular/common';
     MatButton,
     NgIf
   ],
-  styleUrl: 'dashboard.css'
+  styleUrls: ['dashboard.css']
 })
 export class DashboardComponent implements OnInit {
+
   mode: 'DISARMED' | 'ARMED' | 'ALARM' | string = '';
   lastMessage = '';
   grafanaUrlSafe: SafeResourceUrl;
 
   constructor(
     private security: SecurityService,
-    sanitizer: DomSanitizer
+    sanitizer: DomSanitizer,
+    private peopleCounterService: PeopleCounterService,
+    private rgbColorService: RgbColorService
   ) {
-    // ubaci ovde tvoj grafana link (kasnije)
-    const grafanaUrl = 'http://localhost:3000/d/XXXX/dashboard?orgId=1&kiosk';
+    const grafanaUrl = 'http://localhost:3000/public-dashboards/e555e5477ebe431d87334a69ed8a2652?orgId=1&kiosk';
     this.grafanaUrlSafe = sanitizer.bypassSecurityTrustResourceUrl(grafanaUrl);
   }
 
   ngOnInit() {
-    this.refresh();
-    setInterval(() => this.refresh(), 1500); // kasnije SSE/WebSocket, za sada polling
+    interval(1500).subscribe(() => this.refresh());
   }
+
 
   refresh() {
     this.security.getStatus().subscribe({
-      next: (m) => this.mode = m,
+      next: (m) => this.mode = m.mode,
       error: () => this.mode = 'UNKNOWN'
     });
   }
@@ -53,5 +58,11 @@ export class DashboardComponent implements OnInit {
   }
   alarmOff() {
     this.security.alarmOff().subscribe(() => this.lastMessage = 'ALARM OFF command sent');
+  }
+  emptyRoom() {
+    this.peopleCounterService.emptyRoom().subscribe()
+  }
+  changeColor(color: string) {
+    this.rgbColorService.changeColor(color).subscribe()
   }
 }

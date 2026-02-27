@@ -14,13 +14,14 @@ def run_ds(settings, component, threads, stop_event,
         )
 
     else:
-        from sensors.door_sensor import run_real_door_sensor
+        from sensors.door_sensor import run_ds1_button
 
         t = threading.Thread(
-            target=run_real_door_sensor,
+            target=run_ds1_button,
             args=(settings["pin"], stop_event, print_fn,
                   mqtt_publisher, device_id, component)
         )
+
 
     t.start()
     threads.append(t)

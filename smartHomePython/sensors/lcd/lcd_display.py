@@ -53,9 +53,9 @@ class LCD:
                 "device_id": self.device_id,
                 "sensor_type": "lcd_display",
                 "component": "LCD",
-                "line1": line1,
-                "line2": line2,
-                "timestamp": time.time()
+                "value": f"{line1} {line2}",
+                "timestamp": time.time(),
+                "simulated": False
             }
 
             topic = f"smarthome/{self.device_id}/sensors/lcd"

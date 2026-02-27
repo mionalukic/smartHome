@@ -1,0 +1,7 @@
+<div class="grid">
+  <div class="card" *ngFor="let s of states">
+    <h3>{{ s.measurement }}</h3>
+    <p>Device: {{ s.deviceId }}</p>
+    <p>{{ s.field }}: {{ s.value }}</p>
+  </div>
+</div>

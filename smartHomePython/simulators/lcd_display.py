@@ -13,28 +13,23 @@ def run_lcd_simulator(settings, stop_event, print_fn=print,
         iteration = 0
         while not stop_event.is_set():
             iteration += 1
-            print_fn(f"[LCD] Iteration #{iteration}")
 
             sensor_name = sensor_keys[index]
-
             temp, hum = dht_data.get(sensor_name, ("--", "--"))
-
             line1 = f"{sensor_name} Temp:"
             line2 = f"{temp}C Hum:{hum}%"
-            
 
             line1 = line1[:cols]
             line2 = line2[:cols]
 
-            print_fn(f"[SIM LCD]\n{line1}\n{line2}")
+            print_fn(f"Display: \n{line1}\n{line2}")
 
             if mqtt_publisher and mqtt_publisher.connected:
                 data = {
                     "device_id": device_id,
                     "sensor_type": "lcd_display",
                     "component": "LCD",
-                    "line1": line1,
-                    "line2": line2,
+                    "value": f"{line1} {line2}",
                     "simulated": True,
                     "timestamp": time.time()
                 }

@@ -1,5 +1,5 @@
 .camera-card {
-  background: var(--bg-soft);
+  background: var(--bg-card);
   border: 1px solid var(--border-soft);
   border-radius: 16px;
   padding: 20px;
