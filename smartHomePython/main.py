@@ -420,7 +420,7 @@ def setup_mqtt(settings, device_id):
     
     return None
     
-def create_mqtt_client(device_id, component, broker="localhost", port=1883):
+def create_mqtt_client(device_id, component, broker="192.168.107.107", port=1883):
     safe_print(f"Creating MQTT client for {component} subscription...", component="MQTT")
     client_id = f"smarthome_{device_id}_{component}"
     client = mqtt.Client(client_id=client_id)
