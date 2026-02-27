@@ -5,11 +5,11 @@ import time
 import sys
 
 from settings import load_settings
-from components.door_buzzer import run_db
+from components.door_buzzer import buzz_off, buzz_on, run_db
 from components.door_motion_sensor import run_dpir
 from components.door_membrane_switch import run_dms
 from components.door_sensor import run_ds, publish_door_event
-from components.door_light import run_dl
+from components.door_light import run_dl, turn_off, turn_on
 from mqtt.publisher import MQTTPublisher
 from mqtt.config import MQTTConfig
 from components.door_ultrasonic_sensor import run_dus
@@ -159,8 +159,22 @@ def format_help():
 def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publisher=None, device_id=None, settings=None):
     safe_print("Console ready. Type 'help' for commands.", component="SYSTEM")
 
-    db_settings = pi_settings.get("DB", {})
-
+    if device_id.startswith("pi1"):
+        run_dl(pi_settings.get("DL", {}), threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="DL"),
+                            mqtt_publisher=mqtt_publisher
+                        )
+        actuator_registry.add("DL")
+        run_db(pi_settings.get("DB"), threads, stop_event,
+                print_fn=lambda m: safe_print(m, component="DB"),
+                mqtt_publisher=mqtt_publisher
+            )
+        actuator_registry.add("DB")
+    # run_db(settings.get("PI1").get("DB"), threads, stop_event,
+    #             print_fn=lambda m: safe_print(m, component="DB"),
+    #             mqtt_publisher=mqtt_publisher
+    #         )
+    # actuator_registry.add("DB")
     while not stop_event.is_set():
         try:
             cmd = input("> ").strip()
@@ -206,15 +220,17 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
             elif op == "all":
                 if pi_settings.get("device").get("device_id") == "pi1_door_001":
                     if "DB" not in actuator_registry:
+                        buzz_off()
                         run_db(pi_settings.get("DB"), threads, stop_event,
                                 print_fn=lambda m: safe_print(m, component="DB"),
-                                mqtt_publisher=mqtt_publisher, state='on'
+                                mqtt_publisher=mqtt_publisher
                             )
                         actuator_registry.add("DB")
                     if "DL" not in actuator_registry:
+                        turn_on()
                         run_dl(pi_settings.get("DL", {}), threads, stop_event,
                             print_fn=lambda m: safe_print(m, component="DL"),
-                            mqtt_publisher=mqtt_publisher, state='on'
+                            mqtt_publisher=mqtt_publisher
                         )
                         actuator_registry.add("DL")
                 if pi_settings.get("device").get("device_id") == "pi3_bedroom_001":
@@ -233,11 +249,11 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
 
             elif op == "buzz":
                 sub = parts[1].lower() if len(parts) > 1 else ""
-                safe_print(f"Buzz command: {sub}", component="SYSTEM")
+                db_settings = pi_settings.get("DB", {})
+
                 if sub == "on":
-                    if "DB" in actuator_registry:
-                        safe_print("DB is already turned on", component="SYSTEM")
-                    else:
+                    buzz_on()
+                    if "DB" not in actuator_registry:
                         run_db(db_settings, threads, stop_event,
                             print_fn=lambda m: safe_print(m, component="DB"),
                             mqtt_publisher=mqtt_publisher, state=True
@@ -245,12 +261,8 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                         actuator_registry.add("DB")
 
                 elif sub == "off":
-                    if "DB" in actuator_registry:
-                        safe_print("DB turned off", component="DB")
-                        actuator_registry.discard("DB")
-                    else:
-                        safe_print("DB is already turned off", component="SYSTEM")
-
+                    buzz_off()
+                    safe_print("DB turned off", component="DB")
                 else:
                     safe_print("Usage: buzz on | buzz off", component="SYSTEM")
 
@@ -260,18 +272,15 @@ def command_loop(stop_event, actuator_registry, pi_settings, threads, mqtt_publi
                 dl_settings = pi_settings.get("DL", {})
 
                 if sub == "on":
-                    run_dl(dl_settings, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DL"),
-                        mqtt_publisher=mqtt_publisher,
-                        state=True
-                    )
+                    turn_on()
+                    if "DL" not in actuator_registry:
+                        run_dl(dl_settings, threads, stop_event,
+                            print_fn=lambda m: safe_print(m, component="DL"),
+                            mqtt_publisher=mqtt_publisher)
+                        actuator_registry.add("DL")
 
                 elif sub == "off":
-                    run_dl(dl_settings, threads, stop_event,
-                        print_fn=lambda m: safe_print(m, component="DL"),
-                        mqtt_publisher=mqtt_publisher,
-                        state=False
-                    )
+                    turn_off()
 
                 else:
                     safe_print("Usage: led on | led off", component="SYSTEM")
@@ -411,7 +420,7 @@ def setup_mqtt(settings, device_id):
     
     return None
     
-def create_mqtt_client(device_id, component, broker="localhost", port=1883):
+def create_mqtt_client(device_id, component, broker="192.168.107.107", port=1883):
     safe_print(f"Creating MQTT client for {component} subscription...", component="MQTT")
     client_id = f"smarthome_{device_id}_{component}"
     client = mqtt.Client(client_id=client_id)
@@ -474,7 +483,7 @@ def run_pi_instance(pi_name, settings, args):
         if "--sensors" in args:
             for name, cfg in pi_settings.items():
                 cfg = effective_cfg(name, cfg)
-
+                
                 if name.startswith("DPIR"):
                     safe_print(f"{name} {cfg}", component=name if name in COMPONENT_COLORS else "SYSTEM")
                     run_dpir(cfg, threads, stop_event,

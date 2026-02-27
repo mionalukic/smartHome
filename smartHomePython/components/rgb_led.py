@@ -25,6 +25,8 @@ def on_command_message(client, userdata, msg):
     except Exception as e:
         print(f"[RGB] Error handling IR message: {e}")
 
+def change_color(color):
+    color_queue.put(color)
 
 def run_rgb(settings, threads, stop_event,
              print_fn=print, mqtt_publisher=None, device_id="unknown"):

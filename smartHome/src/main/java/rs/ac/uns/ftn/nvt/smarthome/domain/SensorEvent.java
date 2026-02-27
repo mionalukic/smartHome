@@ -31,6 +31,7 @@ public class SensorEvent {
 
     private Double pitch;
     private Double duration;
+    private Boolean is_entering;
 
     public SensorEvent() {}
 
@@ -44,6 +45,7 @@ public class SensorEvent {
                 ", value=" + value +
                 ", simulated=" + simulated +
                 ", timestamp=" + timestamp +
+                ", is_entering=" + is_entering +
                 '}';
     }
 }

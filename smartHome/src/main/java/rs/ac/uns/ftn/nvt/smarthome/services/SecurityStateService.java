@@ -98,7 +98,7 @@ public class SecurityStateService {
 
 
     public synchronized void triggerAlarm(AlarmReason reason, String sourceComponent) {
-        if (!stateStore.isArmed()) return;           // ALARM samo iz ARMED
+        if (!stateStore.isArmed()) return;           
         if (stateStore.isAlarm()) return;
 
         stateStore.setMode(SecurityMode.ALARM);

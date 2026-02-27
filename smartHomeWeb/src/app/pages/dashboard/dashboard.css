@@ -1,8 +1,9 @@
 .grid{
-  display:grid;
-  grid-template-columns: 380px 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
   align-items: start;
+  width: 100%;
 }
 
 .card{
@@ -11,6 +12,7 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  width: 100%;
 }
 
 .card mat-card-title{

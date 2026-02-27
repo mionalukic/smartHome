@@ -6,7 +6,7 @@ except ImportError:
 
 
 def run_ultrasonic(trig_pin, echo_pin, stop_event, print_fn=print,
-                   mqtt_publisher=None, device_id='pi', component='DUS'):
+                   mqtt_publisher=None, device_id='pi', component='DUS', add_measurement=None):
 
     if GPIO is None:
         print_fn("GPIO not available, cannot run ultrasonic sensor")
@@ -58,6 +58,8 @@ def run_ultrasonic(trig_pin, echo_pin, stop_event, print_fn=print,
             payload["distance_cm"] = distance
             payload["unit"] = "cm"
             print_fn(f"{component} Distance: {distance} cm")
+            if add_measurement:
+                add_measurement(device_id, distance)
         else:
             payload["error"] = "measurement_timeout"
             print_fn(f"{component} Measurement timeout")

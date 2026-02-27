@@ -4,6 +4,7 @@ import { DashboardComponent } from './pages/dashboard/dashboard';
 import {SecurityComponent} from './security/security';
 import {KitchenTimerComponent} from './pages/kitchen-timer/kitchen-timer';
 import {CameraComponent} from './pages/camera/camera';
+import { States } from './pages/states/states';
 
 export const routes: Routes = [
   {
@@ -13,6 +14,9 @@ export const routes: Routes = [
       {path :'security', component : SecurityComponent},
       {path: 'timer', component: KitchenTimerComponent},
       {path: 'camera', component: CameraComponent},
+      {path: 'dashboard', component: DashboardComponent},
+      {path: 'state', component: States},
+
     ]
   }
 ];

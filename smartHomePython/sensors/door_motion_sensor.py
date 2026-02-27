@@ -4,6 +4,7 @@ try:
 except ImportError:
     GPIO = None
 
+from components.door_ultrasonic_sensor import is_entering
 
 class DPIR(object):
     def __init__(self, pin, component):
@@ -47,9 +48,9 @@ class DPIR(object):
                 "pin": self.pin,
                 "state": state,
                 "value": value,
-                "timestamp": time.time()
+                "timestamp": time.time(),
+                "is_entering": is_entering(self.device_id)
             }
-
             topic = f"smarthome/{self.device_id}/sensors/{self.component.lower()}"
             self.mqtt_publisher.publish(topic, payload, use_batch=True)
 

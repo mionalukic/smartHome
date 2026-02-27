@@ -106,14 +106,16 @@ public class InfluxWriter {
                         (event.getPitch() != null ||
                                 event.getDuration() != null) ? 1 : 0;
 
-                point.addField("value", active);
+                point.addField("value", active)
+                        .addField("pitch", String.valueOf(event.getPitch()))
+                        .addField("duration", String.valueOf(event.getDuration()));
                 break;
 
             case "security_event":
                 if (event.getValue() != null) {
                     point.addField("detail", event.getValue().toString());
                 }
-                point.addField("state", event.getState() != null ? event.getState() : "unknown");
+                point.addTag("state", event.getState() != null ? event.getState() : "unknown");
                 break;
 
 

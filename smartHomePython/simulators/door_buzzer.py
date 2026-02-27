@@ -1,17 +1,17 @@
 import time
 import random
 
-def run_db_simulator(stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
+def run_db_simulator(stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1', get_DB_state=None):
 
     print_fn("DB simulator started")
     
     while not stop_event.is_set():
-        time.sleep(random.randrange(5, 15))
+        time.sleep(1)
+        state = get_DB_state()
+        if state is None or not state:
+            continue
         
-        if stop_event.is_set():
-            break
-        
-        pitch = random.choice([440, 880, 660])  # A4, A5, E5
+        pitch = random.choice([440, 880, 660])
         duration = random.uniform(0.1, 0.5)
         timestamp = time.time()
         

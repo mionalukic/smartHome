@@ -51,20 +51,30 @@ class DL(object):
                 "device_id": self.device_id,
                 "sensor_type": "door_light",
                 "component": "DL",
-                "state": state,
+                "value": 1 if state else 0,
                 "timestamp": time.time()
             }
 
             topic = f"smarthome/{self.device_id}/sensors/dl"
             self.mqtt_publisher.publish(topic, data, use_batch=True)
 
-def run_dl_loop(dl, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1'):
- 
+def run_dl_loop(dl, stop_event, print_fn=print, mqtt_publisher=None, device_id='pi1', get_dl_state=None, turn_off=None, do_change=None):
     dl.setup(print_fn, mqtt_publisher, device_id)
 
     print_fn("DL ready for state changes")
-
+    current_state = None
+    start_time = None
     while not stop_event.is_set():
-        time.sleep(1.0)
-
+        state, should_change = get_dl_state() if get_dl_state else None
+        if state is None or state == current_state:
+            if current_state and should_change:
+                start_time = time.time()
+                if do_change != None : do_change()
+            if start_time != None and turn_off != None and current_state == True and time.time() - start_time > 10:
+                turn_off()
+            time.sleep(0.1)
+            continue
+        dl.set_state(state, print_fn, mqtt_publisher, device_id)
+        current_state = state
+        time.sleep(0.1)
     print_fn("DL loop stopped")
